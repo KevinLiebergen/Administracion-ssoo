@@ -207,7 +207,7 @@
 - `$ du -sh /etc/* 2>/dev/null | sort -rh | head -10 > prueba.csv`
 
 
-- __Problema:__ CSV separa por comas las columnas, necesario transformar las comas en un punto.
+- **Problema:** CSV separa por comas las columnas, necesario transformar las comas en un punto.
 - `$ du -sh /etc/* 2>/dev/null | sort -rh | head -10 | tr ',' '.'> prueba.csv`
 
 ## cat
@@ -239,7 +239,7 @@
     ...
 ```
 
-- __Ejercicio: __ Mostrar la hora en el fichero /var/log/syslog
+- __Ejercicio:__ Mostrar la hora en el fichero /var/log/syslog
     - Eliminamos varios espacios para limitarlo a 1 de lo que se muestre por cat con tr -s ' '.
     - Cogelos las columnas 1 y 2 delimitado por `:` con cut -d.
 
@@ -258,7 +258,7 @@
 
 ## grep
 
-- Utilizar enexpresiones regulares:
+- Utilizar en expresiones regulares:
 
 - conjuntos entre corchetes
     - Resaltan las letras o, s, c, a y la r.
@@ -270,22 +270,25 @@
 ```
 
 - Busca por rangos de letras
+    - Solo resaltan las letras
 
 ```bash
-    #Solo resaltan las letras
     $ grep '[a-z]'
     7654
     hola
     hola
+```
 
-    #Solo resaltan los números
+- Solo resaltan los números
+
+```bash
     $grep '[0-9]'
     prueba
     1234
-´´´
+```
 
-- `^` Que empiece por
-- `$` Que termine por
+- `\^` Que empiece por
+- `\$` Que termine por
 
 ```bash
     #Resalta la primera letra si empieza por letra o numero
@@ -303,10 +306,10 @@
     akprueba
     akprueba
 ```
-
 - cuantificadores:
-    - `+`, `*` se scribe con barra invertida`\+`
-´´´bash
+    - `+`, `*` se scribe con barra invertida `\+`
+
+```bash
     $ grep '^[0-9]\+-[A-Z]'
     4355-D
     4355-D
@@ -316,7 +319,6 @@
 ## Extra
 
 - elasticsearch: inserciones lentas y busquedas lentas
-
 - `\r` Retorno de carro, sirve para que el cursor vuelva al principio de todo.
 - `\n` Salto de linea, añadir una nueva linea.
 - Linux únicamente usa `\n`.
@@ -326,7 +328,5 @@
     - Por este motivo se codifica para enviar mediante páginas web
 
 - Archivo /var/log/syslog para ver los logs, si se rompe algo ver que se ha escrito aqui
-
-
 
 
