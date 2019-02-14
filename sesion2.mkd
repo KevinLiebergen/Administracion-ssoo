@@ -4,7 +4,7 @@
 
 - Oneliners vs multiliners
 
-- `*`, ` `, `$` Metacaracteres 
+- `*`, ` `, `$`... Metacaracteres 
 
 ```bash
     $ echo hola voy a multiplicar 2 * 4 = 8
@@ -20,31 +20,43 @@
 ```
 
 - Tipos de entrecomillado:
-    - Doble("): lo de dentro no lo interpretes como metacaracteres excepto lo de sustitucion de variables.
-
-    -simple(') mas flojo que el doble
-
-    -bag tick (`): ejecutar, sustituir y lo lanza detras:
-    	echo hoy son las 'date'
-    	es lo mismo que:
-    	echo hoy son las $(date)
+    - Simple(') El contenido se interpreta de forma literal. No traduce por variables
+```bash
+    $ SALUDO='Hola $USER, que tal?'
+    $ echo $SALUDO
+    HOLA $USER, que tal
+```
+    - Doble("): lo de dentro no lo interpretes como metacaracteres, sustitúyelo.
+```bash
+    $ SALUDO='Hola $USER, que tal?'
+    $ echo $SALUDO
+    HOLA kevin, que tal
+```
+    - Bag tick (`): ejecutar, sustituir y lo lanza detras:
+    	- Los dos comandos de debajo hacen lo mismo:
+        - `$ echo hoy son las 'date'`
+    	- `$ echo hoy son las $(date)`
 
 - `#` Comentario
-
-```bash
-$ echo ### asd ###
-```
+    - `$ echo ### asd ###`
 
 - `=` Preguntar
-- `$ echo ==== /Users/ogarcia/*`
+    - `$ echo ==== /Users/ogarcia/*`
 
 
 - `?` Metacaracter, sustituye por algun caracter ejemplo:
 
-- `$ ls -ld /etc/???` Muestra archivos que solo tengan 3 letras.
+- Muestra archivos que solo tengan 3 letras.
+```bash
+    $ ls -d /etc/???
+    /etc/apm  /etc/gss  /etc/opt  /etc/rmt
+```
 
-- `$ ls -ld /etc/p???` Muestra archivos que empiecen por p y tengan 4 letras
-
+- Muestra archivos que empiecen por p y tengan 4 letras
+```bash
+    $ ls -ld /etc/p???
+    /etc/perl
+```
 
 - `mkdir -p dir/{c1,c2,c3}` Es lo mismo que `$ mkdir -p dir/c1 dir/c2 dir/c3`
 
