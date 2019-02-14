@@ -20,22 +20,26 @@
 ```
 
 - Tipos de entrecomillado:
+
     - Simple(') El contenido se interpreta de forma literal. No traduce por variables
-```bash
-    $ SALUDO='Hola $USER, que tal?'
-    $ echo $SALUDO
-    HOLA $USER, que tal
-```
     - Doble("): lo de dentro no lo interpretes como metacaracteres, sustitúyelo.
-```bash
-    $ SALUDO='Hola $USER, que tal?'
-    $ echo $SALUDO
-    HOLA kevin, que tal
-```
     - Bag tick (`): ejecutar, sustituir y lo lanza detras:
     	- Los dos comandos de debajo hacen lo mismo:
         - `$ echo hoy son las 'date'`
     	- `$ echo hoy son las $(date)`
+
+```bash
+    #Ejemplo comillas simples
+    $ SALUDO='Hola $USER, que tal?'
+    $ echo $SALUDO
+    HOLA $USER, que tal
+
+    #Ejemplo comillas dobles
+    $ SALUDO="Hola $USER, que tal?"
+    $ echo $SALUDO
+    HOLA kevin, que tal
+```
+
 
 - `#` Comentario
     - `$ echo ### asd ###`
@@ -99,7 +103,8 @@
 
 - Ver procesos abiertos
     - `top` Interactivo.
-    - `ps` No interactivo. Se puede hacer `$ ps ax | grep bash | wc -l`
+    - `ps` No interactivo. 
+    - Se puede hacer `$ ps ax | grep bash | wc -l`
 
 
 - `uptime` Comando para ver cuanto tiempo ha estado encendida la máquina.
