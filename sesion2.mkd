@@ -1,0 +1,315 @@
+# Sesión 2 - 2018/2019
+
+- `echo`, `cd`, `ls` Órdenes internas
+
+- Oneliners vs multiliners
+
+- `*`, ` `, `$` Metacaracteres 
+
+```bash
+    $ echo hola voy a multiplicar 2 * 4 = 8
+    
+    hola voy a multiplicar 2 Descargas Documentos Escritorio github
+```
+
+- Para que escape usar `\*` o comillas dobles.
+
+```bash
+    $ echo hola voy a multiplicar 2 \* 4 = 8
+    hola voy a multiplicar 2 * 4 = 8
+```
+
+- Tipos de entrecomillado:
+    - Doble("): lo de dentro no lo interpretes como metacaracteres excepto lo de sustitucion de variables.
+
+    -simple(') mas flojo que el doble
+
+    -bag tick (`): ejecutar, sustituir y lo lanza detras:
+    	echo hoy son las 'date'
+    	es lo mismo que:
+    	echo hoy son las $(date)
+
+- `#` Comentario
+
+```bash
+$ echo ### asd ###
+```
+
+- `=` Preguntar
+- `$ echo ==== /Users/ogarcia/*`
+
+
+- `?` Metacaracter, sustituye por algun caracter ejemplo:
+
+- `$ ls -ld /etc/???` Muestra archivos que solo tengan 3 letras.
+
+- `$ ls -ld /etc/p???` Muestra archivos que empiecen por p y tengan 4 letras
+
+
+- `mkdir -p dir/{c1,c2,c3}` Es lo mismo que `$ mkdir -p dir/c1 dir/c2 dir/c3`
+
+
+- `$?` Muestra el estado del comando anterior
+    - Si sale bien el comando anterior devuelve 0. Unix contrario al lenguaje normal de programación
+
+```bash
+    $ mkdir dir
+    mkdir: no se puede crear el directorio «dir»: El archivo ya existe
+
+    $ echo $?
+    1
+
+    $ mkdir dir2
+    $ echo $?
+    0
+```
+
+- `&&` Se ejecuta el segundo comando si el primero ha salido bien.
+- `||` Se ejecuta el segundo comando si el primero __no__ ha ido bien
+
+- `$ mkdir nuevodir || rm -rf nuevodir`Si falla y no se puede crear nuevodir se borra el fichero nuevodir
+
+- Evaluacion en cortocircuito.
+    - `f(a || b || c )`   si el primero cumple la comparacion se deja de valorar las siguientes expresiones
+    - Ahorro de tiempo
+
+- `^` Lineas que comiencen por
+    - `| grep ^root`
+
+
+- __Ejercicio:__ Comprobar si existe usuario, si no crear carpeta con nombre del usuario
+
+```bash
+    $ USUARIO=pepe
+    
+    $ cat /etc/passwd | grep $USUARIO || mkdir ~/$USUARIO
+```
+
+- Ver procesos abiertos
+    - `top` Interactivo.
+    - `ps` No interactivo. Se puede hacer `$ ps ax | grep bash | wc -l`
+
+
+- `uptime` Comando para ver cuanto tiempo ha estado encendida la máquina.
+    - En uptime los numeros del final, indica la carga de la máquina en un intervalo de 1, 5 y 15 minutos.
+    - Si el primero numero es muy alto y los otros bajos es que tienes mucho trabajo ahora puntualmente,
+    - Si es al revés significa que ya ha pasado el pico de trabajo
+    - Los numeros son porcentaje respecto a las cpus que tienen.
+    - Si tenemos 2 cpus y pone 2 estas a tope, muy jodido.
+    - Nunca utilizar el ordenador encima del 40%
+
+
+- `jitter` Retardo de procesos
+- Condiciones para que sea un filtro: recibir datos de stdin
+    - `grep` si es un filtro, coge sus datos de stdin
+
+## tr
+
+- `tr` Translator Sustituye letras. La letra a traducela por la letra x
+- Entre corchetes tambien vale
+
+```bash
+    $ tr a X
+    hola mundial de la vida
+    holX mundiXl de lX vidX
+
+    $ tr aeiou AEIOU
+    hola mundial de la vida
+    hOlA mUndIAl dE lA vIdA
+
+    $ tr [aeiou] [AEIOU]
+    hola mundo de la vida
+    hOlA mUndO dE lA vIdA    
+```
+
+- `tr -s` (squeeze, comprimir) coge el caracter que te de y lo reduces a uno.
+    - Utilizad para espacios en blanco
+
+```bash
+    $ tr -s H
+    HHHHHHola
+    Hola
+```
+
+- `tr -d` elimina la ocurrencia de un determinado caracter.
+
+## sort
+
+- `sort` Comando para ordenar, por defecto alfabeticamente.
+    - `sort -n` Ordenar numericamente.
+    - `sort -r` Ordenar inversamente
+
+```bash
+    $ du -s /etc/* | sort -rn
+    
+    3728	/etc/brltty
+    2272	/etc/apparmor.d
+    1500	/etc/vmware-installer
+    808	/etc/ssl
+    584	/etc/ssh
+    452	/etc/X11
+    452	/etc/fonts
+    340	/etc/sane.d
+    264	/etc/systemd
+    264	/etc/init.d
+    264	/etc/ImageMa
+```
+
+- `tail` Escoger las últimas líneas
+- `head` Escoger las primeras líneas
+
+```bash
+    $ du -sh /etc/* | sort -h | head -7
+
+    du: no se puede leer el directorio '/etc/cups/ssl': Permiso denegado
+    du: no se puede leer el directorio '/etc/polkit-1/localauthority': Permiso denegado
+    du: no se puede leer el directorio '/etc/ssl/private': Permiso denegado
+    0	/etc/printcap
+    0	/etc/resolv.conf
+    0	/etc/subgid-
+    0	/etc/subuid-
+    0	/etc/virt-builder
+    0	/etc/vtrgb
+    4,0K	/etc/adduser.conf
+```
+
+- `2>/dev/null` Redirección a la papelera para los mensajes de error no aparezcan!
+
+```bash
+    $ du -sh /etc/* 2>/dev/null | sort -rh | head -10
+    0	/etc/printcap
+    0	/etc/resolv.conf
+    0	/etc/subgid-
+    0	/etc/subuid-
+    0	/etc/virt-builder
+    0	/etc/vtrgb
+    4,0K	/etc/adduser.conf
+```
+
+- Redirecciones `>`
+- `$ du -sh /etc/* 2>/dev/null | sort -rh | head -10 > prueba.csv`
+
+
+- __Problema:__ CSV separa por comas las columnas, necesario transformar las comas en un punto.
+- `$ du -sh /etc/* 2>/dev/null | sort -rh | head -10 | tr ',' '.'> prueba.csv`
+
+## cat
+
+- `cat` trabaja con archivos estructurados, un archivo estructurado se compone de:
+    - Registros (líneas).
+    - Cada registro está dividido en campos.
+    - Debe tener al menos un delimitador que indique donde termina un registro y empieza el siguiente (salto de linea o retorno de carro).
+    - Debe tener otro delimitador que indique donde acaba un campo y empieza otro.
+
+## cut
+
+- `cut` Elimina secciones de cada linea
+    - `-c` Para deliminar por caracteres
+    - `-f` Delimitar por filas
+
+```bash
+    $ cat /etc/passwd | cut -d ':' -f 1-4
+    
+    hplip:x:117:7
+    geoclue:x:118:124
+    gnome-initial-setup:x:119:65534
+    gdm:x:120:125
+    kevin:x:1000:1000
+    cups-pk-helper:x:121:116
+    debian-tor:x:122:127
+    sshd:x:123:65534
+    statd:x:124:65534
+    ...
+```
+
+- __Ejercicio: __ Mostrar la hora en el fichero /var/log/syslog
+    - Eliminamos varios espacios para limitarlo a 1 de lo que se muestre por cat con tr -s ' '.
+    - Cogelos las columnas 1 y 2 delimitado por `:` con cut -d.
+
+```bash
+    $ cat /var/log//syslog | tr -s ' ' | cut -d: -f1-2    
+    
+    Feb 6 12:18
+    Feb 6 12:18
+    Feb 6 12:18
+    Feb 6 12:18
+    Feb 6 12:19
+    Feb 6 12:19
+    Feb 6 12:19
+```
+
+
+## grep
+
+- Utilizar enexpresiones regulares:
+
+- conjuntos entre corchetes
+    - Resaltan las letras o, s, c, a y la r.
+
+```bash
+    $ grep '[oscar]'
+    hola oscar
+    hola oscar
+```
+
+- Busca por rangos de letras
+
+```bash
+    #Solo resaltan las letras
+    $ grep '[a-z]'
+    7654
+    hola
+    hola
+
+    #Solo resaltan los números
+    $grep '[0-9]'
+    prueba
+    1234
+´´´
+
+- `^` Que empiece por
+- `$` Que termine por
+
+```bash
+    #Resalta la primera letra si empieza por letra o numero
+    $ grep '^[a-z0-9]'
+    prueba
+    prueba
+    -
+```
+
+- Resalta cualquier cosa que empieze por letra o numero minuscula y que siga por k.
+
+```bash
+    $ grep '^[a-z0-9]k'
+    prueba
+    akprueba
+    akprueba
+```
+
+- cuantificadores:
+    - `+`, `*` se scribe con barra invertida`\+`
+´´´bash
+    $ grep '^[0-9]\+-[A-Z]'
+    4355-D
+    4355-D
+    prueba
+```
+
+## Extra
+
+- elasticsearch: inserciones lentas y busquedas lentas
+
+- `\r` Retorno de carro, sirve para que el cursor vuelva al principio de todo.
+- `\n` Salto de linea, añadir una nueva linea.
+- Linux únicamente usa `\n`.
+- Windows utiliza `\r\n`
+
+- Ventaja base64: codificar caracteres raros que lo normal es que se utilicen mas de 7 bits, por ejemplo la ñ.
+    - Por este motivo se codifica para enviar mediante páginas web
+
+- Archivo /var/log/syslog para ver los logs, si se rompe algo ver que se ha escrito aqui
+
+
+
+
