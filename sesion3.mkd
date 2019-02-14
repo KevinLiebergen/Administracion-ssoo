@@ -1,0 +1,290 @@
+# Sesion 3 - 2018/2019
+
+- Queremos a partir de una querystring sacar el numero despues de id
+
+```bash
+    $ querystring="Nombre=Oscar&id=28"
+
+    $ echo $querystring | cut -d "&" -f 2
+
+    id=28
+
+    $ echo $querystring | cut -d "&" -f 2 | cut -d "=" -f 2
+
+    28    
+
+    #Para guardar la salida en una variable
+    $ ID=$(echo "nombre=Oscar&id=28" | cut -d "&" -f 2 | cut -d "=" -f 2)
+
+    $ echo $ID
+    
+    28
+```
+- $(orden) = Resultado de ejecución de orden
+- ${variable} = Resultado de ejecución de orden contenida en variable
+
+
+- Los 3 comandos dan el mismo resultado: cruel
+
+```bash
+    #Coge la fila 3, delimitador +
+    $ echo "Hola+mundo+cruel" | cut -d + -f3
+
+    #Del caracter 11 al final (-c11-) Importante el - del final
+    $ echo "hola+mundo+cruel" | cut -c11-
+
+	#De la fila 3 al final, delimitador +
+    $ echo "Hola+mundo+cruel" | cut -d + -f3-
+```
+
+
+- `$ history` Históricos de órdenes identificadas con un índice.
+
+- `$ !504` Ejecuta el comando numero 504  de history.
+
+- `$ !ls` Ejecuta la última orden `ls` del histórico.
+
+- El history te da una idea de lo que hace el administrador
+- El history es recomendarlo borrar cuando te vas como administrador por seguridad
+
+- `.bash_history` Fichero donde se guardan los comandos
+
+- Archivos con terminaciones en rc significa que se ejecuta al iniciar antes de algún servicio: .bashrc, .conkyrc....
+
+- Servicios que termina en d significan daemon, sshd,vpxd...
+
+- gzip no actúa como filtro pero se puede actuar como ello.
+```bash
+    $ gzip carta.txt
+
+    $ cat carta.txt | gzip -f
+```
+
+- Significa que todas las órdenes de la orden de unix tienen un flag para incorporarlo a tuberias
+
+
+- Con ` | vim -` El archivo a editar es leído desde stdin. vim no es un filtro entero porque no saca por stdout si no que lo guarda en un fichero
+
+- `$ ps ax | vim -`
+
+- cuantificadores: ?, +, *.
+    - [...]?  puede existir o no
+    - \+  1 o mas veces
+    - \*  0 o mas veces
+    - . cualquier caracter
+    - {n,m} aparece de n a m veces
+
+
+## Find
+
+- `find ¿Desde donde busco? ¿que busco? ¿que hago cuando lo encuentre?`
+
+- usar `/`  para buscar desde la raiz, dos problemas.
+    - Necesitas tener permisos de administrador.
+    - Prohibitiva por tiempo de ejecucion, no  te deja del todo, usar locate.
+- `-d` Para controlar la profundidad de los subdirectorios.
+
+- $ find /etc -name "*.conf" -size +1M
+
+- ¿Que busco?, buscar por:
+    - `size` Tamaño, +200k...
+    - `user` Propietario, root...
+    - `name` Nombre
+    - `type` c (caracter), d (directorio), f (fichero)...
+    - ...
+
+
+- `!` Exclamacion niega, encuentra los archivos que no son del requisito indicado.
+
+- `$ find /usr ! -user root` Encuentra los archivos en /usr donde root no sea propietario.
+
+
+- Predicado - ¿Qué hago cuando lo encuentre?
+
+    - print
+    - -exec comando \;
+    - `\;` Final de orden, ejecuta la orden e indica que acaba.
+    - `-exec echo "Encontrado" {}\;`
+    - `{}` Placeholder, sustituye por el nombre del archivo encontrado
+
+```bash
+    $ find . -name "*.conf" -exec echo {} encontrado \;
+    
+    ./ul.conf encontrado
+    ./QtProject.conf encontrado
+    ./postgresql.conf encontrado
+    ./vlc-qt-interface.conf encontrado
+    ./fonts.conf encontrado
+    ./extract.conf encontrado
+    ./m2.conf encontrado
+    ./app.conf encontrado
+    ...
+```
+
+
+- Copia todos los ficheros del directorio actual que acaben en conf y copialos a la carpeta ~/pruebas/backup.
+
+- __Consejo del profe__ primero hacer un echo para ver los comandos que se van a relizar, cuando veas que está bien hacerlo sin echo.
+
+```bash
+    $ find /etc -name "*.conf" -exec echo cp {} ~/pruebas/backup \;
+
+    cp /etc/apg.conf /home/kevin/pruebas/backup
+    cp /etc/apparmor/parser.conf /home/kevin/pruebas/backup
+    cp /etc/apparmor/subdomain.conf /home/kevin/pruebas/backup
+    cp /etc/apport/crashdb.conf /home/kevin/pruebas/backup
+    
+    $ find /etc -name "*.conf" -exec cp {} ~/pruebas/backup \;
+
+```
+
+- Comprimir con gzip, primero ver lo que hace con echo.
+    - `$ find ~/pruebas -name "[a-z]*" -exec echo gzip {} \;`
+    - `$ find ~/pruebas -name "[a-z]*" -exec gzip {} \;`
+
+- Archivos tar.
+    - `tar -vrf backup.tar /etc/passwd`
+        - `v` verbose.
+        - `r` Añadir un archivo a un archivador (Append).
+        - `f` Asignar nombre.
+
+- Comprimir en un fichero backup.tar los resultados de la búsqueda de ficheros que terminen en .conf.
+    - `find . -name "*.conf" -exec tar -vrf backup.tar {} \;`
+
+
+## Programación en bash
+
+
+- `$ which bash` Comando para saber la ruta donde esta la shell.
+
+- Aplicado a python
+
+```bash
+    $ which python
+    /usr/bin/python
+```
+- La ruta se pone en la cabecera para un script y sea ejecutable.
+    - `#!/usr/bin/python`
+    - `#!/bin/bash`
+
+- Capturar argumentos:
+
+```bash
+    #!/bin/bash
+
+    echo "hola soy un script"
+    echo "Argumentos " $1 $2 $3
+```
+
+```bash
+    $ chmod 755 script.sh
+    $ ./script.sh
+
+    hola soy un script
+    Argumentos  2 3 4
+```
+
+- No se pueden pasar mas de 9 argumentos posicionales, peta en el 10, ¿Qué se puede hacer?
+- Probar que no coge el argumento 10 o más.
+- Usar `shift` Desplaza a la derecha, se puede hacer un bucle para llegar al 10 o mas.
+
+```bash
+    #!/bin/bash
+
+    echo "hola soy un script"
+    echo "Argumentos " $1 $2 $3
+    shift 3 #Desplazamos de 3 en 3
+    echo "Argumentos con desplazamiento" $1 $2 $3 
+    #El $1 antes del shift se refería al 4, mismo con 2 y 3
+```
+
+- El argumento 4 despues del shift 3 valdrá 4-3=1. De esta forma se puede coger mas de 10 argumentos.
+
+```terminal
+    $ ./script.sh a b c d e f g
+    hola soy un script
+    Argumentos  a b c
+    Argumentos con desplazamiento d e f
+```
+
+- `$#` Hallar número de argumentos.
+
+
+IF-ELSE
+
+- `test` Chequea tipos de ficheros y compara valores
+    - `-d` El fichero existe y es un directorio
+
+```bash
+    #!/bin/bash
+    # Respuesta: OK, si parametro tiene directorio en home,
+    #FAIL si caso contrario
+    
+    USER=$1
+    HOME=/home/$USER
+    
+    #ls -d $HOME/$USER 2>/dev/null && echo ok   #forma marrullera
+    #ls -d $HOME/$USER 2>/dev/null || echo fail #mejor hacerlo con test
+    
+    if test -d $HOME
+    then
+            echo OK
+    else
+            echo FAIL
+    fi
+```
+
+## SSH
+
+- SSH (secure shell) Alternativa a telnet, mensajes cifrado con criptografía asimétrica.
+
+- Dos formas de autenticarse mediante ssh:
+    - Usuario + contraseña
+    - Mediante clave publica + privada (challenge response)
+
+- `ssh-keygen` Para crear la clave publica (con extensión .pub) y privada (sin extension)
+    - passphrase: Contraseña para acceder a la clave privada.
+
+- `ssh-add -L` Enumera las claves públicas representadas actualmente por el agente.
+
+- `ssh-add ~/.ssh/amso-gc-id-rsa` Añade tu clave privada a la cache agente ssh (ordenador actual).
+    - Te preguntará por el passphrase
+
+- `$ ssh kevin@35.198.119.233` Para loguearte en su máquina, sin contraseña ni nada ya que antes has dado permiso copiando la clave publica a su fichero.
+
+- Dentro de .ssh/authorized_keys de la máquina a la que te conectas aparecen las claves públicas de las máquinas que te dan acceso.
+
+- `scp` Transferir archivos por ssh.
+    -  `$ scp archivo.txt usuario@direccion:/home/usuario/Desktop`
+    -  `:` Indica que acaba la direccion, si no se pone interpreta que es la ruta.
+    - Si no se especifica ruta se copia en el home del usuario.
+
+- Para acceder a la máquina de luis
+    - Le paso mi clave pública a Luis.
+    - Luis envia mi clave publica a su maquina cloud host .ssh/authorized_keys
+    - Desde mi maquina escribo `$ ssh luis@suDireccion` y ya estoy dentro, sin meter contraseña.
+    - Debido a que su ordena tiene mi clave pública.
+
+
+- `ssh -A user@direccion` (agent forwarding) 
+    - `-A` puedes ir de la maquina cloud mia a la de luis aunque mi máquina de cloud no tenga la clave privada, porque transfiere temporalmente mi clave privada.
+    - Muy útil cuando hay que saltar de una maquina a otra.
+
+- Archivo ~/.ssh/config para ir a una máquina por ssh sin especificar ip ni nombre
+
+```bash
+    Host operaciones
+        Hostname 35.198.119.233
+        User kevin
+        ForwardAgent yes
+```
+
+- `$ ssh operaciones` De esta manera busca en el archivo config y realiza `$ ssh -A kevin@35.198.199.233`. Forma de simplificarlo.
+
+## Extras
+
+- `pbcopy` Para copiar la salida al portapapeles, funciona en IOS
+    - `echo "hola" | pbcopy`
+    - `xclip` Es la alternativa en linux!!
+- Mirar cifrado PGP
+

@@ -1,0 +1,119 @@
+# Sesión 1 - 2018/2019
+
+- Devops (Development operations) - Desarrollador de Sistemas operativos.
+
+### 3 grandes problemas con el ordenador:
+- cpu-ram
+- entrada / salida
+- red
+
+### Filosofia de linux:
+- Todo es tratado como un fichero
+- A parte de ficheros existen procesos
+
+### Bash
+
+
+- `ctrl + alt + t` Nueva ventana.
+
+- `ctrl +` Aumentar letra.
+
+- `ctrl -` Disminuir letra.
+
+
+- ¡LOS ESPACIOS CUENTAN! Se asignan valores sin espacios.
+    -  `$ VARIABLE=3` Forma correcta.
+    -  `$ VARIABLE = 3` Forma incorrecta, error.
+
+- `echo` No es solo un print, sirve para escribir los argumentos en stdout.
+
+- `env` Usado para mostrar las variables de entorno que hay en el sistema, $USER, $PATH... Las variables de entorno se escriben en mayúsculas.
+
+- `df` Disk free. Lee sólo los bloques. Parámetro `-h` Human readable
+
+- `du` Disk usage. Cantidad de espacio ocupado, lee cada objeto y subobjeto y los resume.
+
+- `cd` Con dos espacios o sin espacio te redirige al home
+
+- Consejos para diseñar tu prompt, que tenga:
+    - Username para saber si eres root.
+    - Nombre de la maquina.
+    - En máquinas de produccion (como github) añadir bola extra, poner de color rojo cuando esté en producción.
+    - Path actual
+    - Ejemplo profe: ogarcia@Pepi:[~]:
+    - [Prompt generator online](http://bashrcgenerator.com/)
+
+
+- Variable $PATH aquellas rutas donde la bash va a buscar cuando vamos a ejecutar comando/programas, van en orden, desde el primero hasta el ultimo
+
+- Añadir ruta al $PATH desde un fichero (usualmente .profile o .bashrc):
+
+    - `PATH="/opt/eclipse:$PATH"` Añadir al principio de $PATH
+
+    - `PATH="$PATH:/opt/eclipse"` Añadir al final
+
+
+- `which` Para saber la ruta donde se encuentra el ejecutable
+
+```bash
+    kevin@Acer-Aspire:~$ which firefox
+    /usr/bin/firefox
+```
+
+- `tr` Sustituir letras (translate), parametro `-d` para eliminar caracteres entre comillas.
+
+```bash
+    $ cat fichero | tr -d ' ' > ficheroSinEspacios
+```
+
+- Expansión con sustitución de ordenes: permite que la salida de un comando sustituya al propio comando
+
+volcamos la ocupacion de un disco en un archivo llamado disco- con la fecha de hoy con el formato yeat-month-day
+
+```bash
+    $ df -h > discos-$(date +%d-%m-%y).txt
+    $ ls
+    discos-08-02-19.txt
+```
+
+- ¿Por qué...
+```bash
+    $ echo hola mundo | gzip -f | hexdump -C 
+```
+
+- ...ocupa más que...
+
+```
+    $ echo hola mundo | hexdump -C
+```
+- ...?
+
+- Ocupa más comprimido que sin comprimir debido a las cabeceras, la compresión es más eficientes para archivos grandes que pequeños
+
+- `zcat` Realizar cat sobre archivos comprimidos.
+
+- `sudo` superuser do
+
+## Extra
+
+- conversion: Que una persona compre, se convierte a un cliente conocido.
+
+- leats(?): clientes potenciales.
+
+- On premise (En casa) vs cloud (En la nube).
+
+- Transferencia de riesgo: seguro por si se borran los datos del cloud.
+
+- Porcentaje de cobertura, porcentaje de lineas que ha pasado por el programa.
+
+- Integración continua (tests para comprobar que funciona).
+
+- Mock: engañar y poner los tests.
+
+- balanceador de carga: Dispositivo de hardware o software que se pone al frente de un conjunto de servidores  que atienden a una aplicación y balancea las solicitudes que llegan.
+
+- Terraform Facilita la codificación de una infraestructura.
+
+- Audit trail: Pista de auditoria, registro cronológico que proporciona evidencia documental de la secuencia de actividades que han afectado en cualquier momento una operación.
+
+- Snippets: Pequeñas partes reusables de código.
