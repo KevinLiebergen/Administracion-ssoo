@@ -318,7 +318,7 @@
 
 ## Extra
 
-- elasticsearch: inserciones lentas y busquedas lentas
+- elasticsearch: inserciones lentas y busquedas rápidas.
 - `\r` Retorno de carro, sirve para que el cursor vuelva al principio de todo.
 - `\n` Salto de linea, añadir una nueva linea.
 - Linux únicamente usa `\n`.
