@@ -1,0 +1,256 @@
+# Sesión 4 - 2018/2019
+
+# Bash
+- `$*` Dentro un shell script para imprimir todos los argumentos
+
+```bash
+#!/bin/bash
+
+echo "Los colores escritos son " $*
+```
+
+```bash
+$ ./colores.sh azul rojo
+los colores son  azul rojo
+```
+
+- **Problema:** Como pases por parámetro un directorio te saca lo que hay allí.
+```bash
+$ ./colores.sh /dev/*
+
+los colores son  /dev/autofs /dev/block /dev/bsg
+/dev/btrfs-control /dev/char /dev/console /dev/core
+/dev/cpu_dma_latency /dev/cuse ...
+```
+
+## For
+
+- Estructura
+```
+for **** in **
+do
+    comandukis
+done
+```
+- Ejemplo
+```bash
+#!/bin/bash
+for color in $*
+do
+echo "Me gusta el color" $color
+done
+```
+
+## If
+
+- Estructura
+```
+if xxxx
+then
+    comandukis
+elif yyyy
+then
+    MasComandukis
+else
+    UltimosComandos
+fi
+```
+- __OJO__ `else` no tiene `then`, `if` y `elif` sí.
+- Ejemplo hecho en clase para mostrar de que tipo son los dispositivos de un directorio
+
+```bash
+#!/bin/bash
+
+for dev in $*
+do
+  if test -b $dev
+  then
+    tipo="dispositivo de modo bloque"
+  elif test -c
+  then
+    tipo="dispositivo de modo carácter"
+  else
+    tipo="desconocido"
+  fi
+
+  echo "El dispositivo $dev es de tipo $tipo"
+done
+```
+## Case
+
+- Estructura 
+```
+case xxxx in
+"Parametro a comparar")
+    comandos
+    ;;
+*)  # Para todo lo demas
+    comandos
+    ;;
+esac
+```
+- `esac` Para finalizar una sentencia `case` (Al revés).
+- `fi` Para finalizar una sentencia `if`.
+
+- Ejemplo
+```bash
+#!/bin/bash
+
+for dev in $*
+do
+	description=$(file $dev)
+
+	case $description in
+	*"character special"*)
+		tipo="Es un dispositivo de modo caracter"
+		;;
+	*"block"*)
+		tipo="Es un dispositivo de modo bloque"
+		;;
+	*)
+		tipo="No se que es"
+		;;
+    esac
+
+echo "El dispositivo $dev es de tipo $tipo"
+done
+```
+- Los asteriscos de antes y después de `"character special"` y `"block"` sirve para incluir todo lo demás de antes y después
+
+
+- `--color` En grep para resaltar la búsqueda en color rojo la palabra bloque. Probar!!
+- `$ ./devices.sh /dev/* | grep --color bloque`
+
+
+- `$RANDOM` Genera un número entre 0 y 32767. Probar con `$ echo $RANDOM`
+- `%` Se obtiene el resto de una división
+
+- `expr` Permite resolver expresiones matemáticas
+    - `$ expr 1 + 2` obtenemos la salida: `3`
+    - `$ expr $RANDOM % 10` Obtenemos un número aleatorio entre 0 y 9
+- `test` Analizar tipo de ficheros y compara valores
+    - `-b` Devuelve true si el fichero existe y es un bloque especial
+    - `-d` El fichero existe y es un directorio
+    - `-e` El fichero existe
+    - `-f` El fichero existe y es un fichero regular
+    - Ejemplo `$ test -d ~/Escritorio/directorioPrueba`
+    - Permite comparar 2 strings __(Con un único =)__
+        - `$ test $variable1 = $variable2`
+    - Permite comparar 2 números:
+        - `-lt` Les than. `test $integer1 -lt $integer2`
+        - `-gt` Greater than. `test $integer1 -gt $integer2`
+- `[ ]` Equivalente a test. Exactamente igual. `[ $integer1 -lt $integer2 ]`
+
+- Ejercicio programa que genera un número y tienes que intentar adivinarlo.
+    - Si no existe el fichero donde se guarda el nº creado en secreto.txt
+
+```bash
+#!/bin/bash
+
+numJugador=$1
+
+# Es lo mismo poner [ -f secreto.txt ] es igual a test -f secreto.txt
+if test -f secreto.txt
+then
+	echo "El fichero existe"
+	numGenerado=$(cat secreto.txt)
+else
+	echo "El fichero no existe"
+	echo "[*] Creando secreto..."
+	numGenerado=$(expr $RANDOM % 10 )
+	
+	echo $numGenerado > secreto.txt	
+fi
+
+
+while [ $numGenerado != $numJugador ]
+do
+	if [ $numGenerado -lt $numJugador ]
+	then
+		echo "Demasiado grande"
+	else
+		echo "Demasiado pequeño"
+	fi
+
+	echo "Escribe otra vez el numero: "
+	read numJugador
+
+done
+
+echo "Los numeros son iguales"
+rm secreto.txt
+```
+- Lo ejecutamos.... Permisos de ejecución con chmod 755 guess.sh
+- `$ ./guess.sh 2`
+
+## Functions
+
+```bash
+#!/bin/bash
+
+function generar_secreto {
+	SECRETO=$(expr $RANDOM % 10)
+	echo $SECRETO > numSecreto.txt
+}
+
+generar_secreto
+```
+## Evaluación en cortocircuito
+
+- El código de debajo si no existe un fichero numSecreto.txt llama al método que lo crea
+```bash
+if test ! -f numSecreto.txt
+then
+	generar_secreto
+fi
+...
+```
+- Es equivalente a poner lo de abajo, evaluación en cortocircuito.
+    - Si la primera expresión devuelve true no evaluamos lo demás.
+```bash
+test -f numSecreto.txt  || generar_secreto
+...
+```
+## Admitir parámetros con cat
+
+```bash
+#!/bin/bash
+
+numero=$(cat)
+
+echo "El numero que has escrito es $numero"
+```
+
+- `$ echo 2 | ./pruebaCat`
+- Salida: El numero que has puesto es 2`
+
+##  Netcat
+
+- Herramienta para el análisis de red.
+
+- Abrir servidor
+    - `-l` Listen mode.
+    - `-p` Port
+    - `$ nc -l -p 1234`
+- Abrir cliente
+    - `$ nc <ipAddress> <port>`
+    - `$ nc 192.168.10.4 1234` Obviamente la dirección es la del servidor!!
+    - Probar que funciona escribiendo algo desde el cliente, debe aparecer en el servidor.
+- Netcat admite tuberías (`|`).
+    - `$ echo "hola" | nc 192.168.10.4 1234`
+
+## Extras
+
+- Habilitar todas las direcciones que accedan por netcat poniendo dirección 0.0.0.0 en el Google Cloud
+
+- Si tienes un jodido proceso que tarda mucho y lo quieres dejar en 2º plano páralo (`Ctrl+z`) y envíalo al background (`bg`).
+```
+$ ./scriptTardaMucho.sh
+Ctrl+z
+
+$ bg
+$ 
+```
+
+- Y la próxima vez ya si te acuerdas pon `&` al final para dejarlo en segundo plano
+    - `$ ./scriptTardaMucho.sh &`
