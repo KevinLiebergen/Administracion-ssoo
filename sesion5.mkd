@@ -1,0 +1,149 @@
+# Sesión 5 - 2018/2019
+
+
+## Ejercicio
+
+- Generar un script que dado una lista de nombres y apellidos imprima 1 nombre y 2 apellidos de cada lista 10 veces.
+
+- Mi solución
+
+```bash
+#!/bin/bash
+
+nombres="Alicia Juan Maria Pedro Julia Mario"
+apellidos="Garcia Lopez Perez Martinez"
+
+cantidadNombres=$(echo $nombres | wc -w)
+cantidadApellidos=$(echo $apellidos | wc -w)
+
+function generarPosicion {
+	numNombre=$(expr $RANDOM % $cantidadNombres + 1)
+	numApellido1=$(expr $RANDOM % $cantidadApellidos + 1)
+	numApellido2=$(expr $RANDOM %  $cantidadApellidos + 1)
+}
+
+
+
+function generarNombre {
+	nombre=$(echo $nombres | cut -d ' ' -f $numNombre)
+}
+
+function generarApellidos {
+	apellido1=$(echo $apellidos | cut -d ' ' -f $numApellido1)
+	apellido2=$(echo $apellidos | cut -d ' ' -f $numApellido2)
+}
+
+for i in $(seq 10)
+do
+	generarPosicion
+	generarNombre
+	generarApellidos
+	echo $nombre $apellido1 $apellido2
+	sleep 1
+done
+
+```
+
+- Cuando se añada nombres/apellidos a la listas es capaz de hacer un random sobre el número de nombres que exista (con wc).
+- `expr $RANDOM % $cantidadNombres + 1` Para seleccionar la posición del nombre a escribir, entre 1 y el número de elementos.
+- Ejecutar con `$ chmod 755 scriptGenerarUsuarios.sh` y `scriptGenerarUsuarios.sh`
+
+
+## Gsutil
+
+- gsutil: Aplicación de python que permite accederal GoogleCloud desde la terminal. __Se utiliza para crear buckets.__
+    - [Google cloud buckets](https://cloud.google.com/storage/docs/json_api/v1/buckets)
+
+- `$ gsutil mb gs://NombreBucketUnico` Crear un bucket 
+- `$ gsutil ls` Listar buckets
+- `$ ./scriptGenerarUsuarios| gsutil cp - gs://NombreBucketUnico/users.log` Salida de un archivo copiarlo al archivo users.log dentro del bucket.
+- `$ gsutil cat gs://NombreBucketUnico/users.log` Imprime del archivo
+- `$ gsutil -m acl ch -r -u allUsers:R gs://NombreBucketUnico/users.log` Ni idea de lo que hace esto, ale a buscar.
+
+- `$ curl 'https://grepitout.com/wp-content/uploads/2017/10/Mountain.jpg'| gsutil cp - gs://NombreBucketUnico/sun.jpg` Guardar un archivo descargado nombrándolo sun.jpg.
+    - Parámetro `-` del cp para aceptar parámetros por stdin.
+    - `curl -O` Escribe la salida a un fichero local llamado como el fichero remoto que tenemos.
+
+
+## uniq
+
+- Filtra o elimina las líneas repetidas en un archivo, __entre la línea actual y la siguiente!__
+- Si fichero.txt tiene el siguiente contenido:
+```
+1
+1
+2
+3
+4
+1
+5
+6
+7
+7
+2
+2
+3
+1
+```
+- `$ uniq -u fichero.txt` Visualizar líneas no repetidas, podemos omitir `-u`.
+    - La salida es:
+```
+2
+3
+4
+1
+5
+6
+3
+1
+```
+- `$ uniq -d fichero.txt` Para visualizar las líneas repetidas.
+    - La salida es:
+```
+1
+7
+2
+```
+- `$ uniq -c fichero.txt` Contar líneas repetidas.
+    - La salida es:
+```
+2 1
+1 2
+1 3
+1 4
+1 1
+1 5
+1 6
+2 7
+2 2
+1 3
+1 1
+```
+
+## sort
+
+
+- [Comando para ordenar](https://github.com/KevinLiebergen/Administracion-ssoo/blob/master/sesion2.mkd)
+
+- Último comando, ordenar los 5 nombres que mas han salido, modificar scriptGenerarUsuarios para que generen 30 personas
+
+- `$ gsutil cat gs://NombreBucketUnico/users.log | cut -d ' ' -f 1 | sort | uniq -c | sort -nr | head -5`
+
+- Por partes, realizamos un cat sobre users.log, nos quedamos con la primera fila que son los nombres y ordenamos los nombres
+- `uniq -c` Cuenta las líneas repetidas, al lado de cada nombre se imprime las veces que aparece.
+- `sort -n` Ordena numéricamente y `-r` Ordena de forma inversa, de mayor a menor. `head -5` Imprime los primeros 5 más repetidos.
+
+## Extras
+
+- ssl terminator- terminadores ssl: Servidor proxy usado para manejar conexiones TLS entrantes, descifrando TLS y pasando la solicitud descifrada a otros servidores (asumiendo que son seguros)
+    - Usado para reducir la carga en los servidores.
+
+- ACL (Listas de Control de acceso) Usado para fomentar la separación de privilegios (Capa de red).
+    - Ventajoso: permisos
+    - Desventajas es un infierno de administrar
+
+- `:set paste` En vim para ayudar a pegar textos sin modificar la estructura (Tabulaciones y saltos de línea) de otras aplicaciones
+    - Una vez le das a `enter` pegas el texto con `Ctrl+Shift+v`
+
+- gcloud: Herramienta de terminal para administrar fácilmente Google Compute Engine resources
+    - `$ gcloud init` Iniciar
