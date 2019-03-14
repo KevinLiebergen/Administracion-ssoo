@@ -1,0 +1,246 @@
+# Sesión 6 - 2018/2019
+
+## Escalabilidad
+
+- Capacidad del software para adaptarse a las necesidades de rendimiento a medida que el nº de usuarios crece y hay mas rendimiento.
+
+
+- Escalado vertical: Cuando la cpu está al 100% la solución es comprarme una máquina con mas cpus.
+    - Ventajas: Más fácil de implementar.
+    - Desventajas: downtime
+
+- Escalado horizontal. Implica tener varios servidores trabajando como un todo.
+    - Se crea un cluster con la finalidad de repartirse el trabajo.
+    - Gracias al Balanceador de carga (Load balancer)
+    - Grupo de autoescalado son los participantes en el escalado
+
+
+
+- wordpress en horizontal con php
+- Ademas tiene una fase de mysql, correr en la misma maquina pero se puede separar
+- wordrpress escala bien horizontalmente
+- mysql escala fatal horizontalmente, es necesario que sea uno maestro
+
+
+## Docker
+
+- Docker, imágenes que encapsulan contenedores de software, se ejecuta sobre el mismo kernel de Linux.
+
+| D1   | D2   |   D3 |   |   |
+|------|------|-----:|---|---|
+| Mismo | Sistema | Operativo |   |   |
+| Mismo   | Hardware| HW   |   |   |
+|      |      |      |   |   |
+
+
+- D1, D2, D3 están aislados, containerization
+- HW igual para todos los dockers
+- SSOO igual para todos
+- Esto significa que comparten el mismo HW, SSOO y kernel
+- De una misma imagen se pueden ejecutar varios contenedores.
+- Actualizaciones incrementales en docker hub, significa que se descargan por capas, por ello es tan rapido el pull cuando se descarga una imagen.
+
+
+
+- `$ docker images` para ver tus imagenes locales
+- `$ docker ps` Ver las imágenes en ejecución
+
+
+
+
+- Para crear una imagen docker se necesita un archivo denominado `Dockerfile`. Primer Dockerfile creado unicamente descargando python.
+
+
+```
+FROM python:latest
+
+```
+
+- `FROM` Especifica que imagen descargar.
+    - A la derecha del `:` especifica que tag/version descargar.
+
+
+- `$ docker build . -t img-kevin:latest` Para ejecutar y descargar la imagen.
+    - `-t` Etiqueta una imagen nombrándola latest.
+    - El nombre de la imagen se llamara img-kevin.
+
+
+- `$ docker run -it img-kevin bash` Para abrir la bash de la imagen.
+    - `-i` Interactive especificas un comando como bash y se te abre
+    - Al dar a enter te aparece: `root@c24266235333:/#`
+
+- El número despues del @ es el numero de identificador, las imágenes son efímeras, cada vez que se abre aparece un número distinto.
+
+
+- Si haces un `# ps ax` ves que solo esta ejecutandose bash y ps ax, bash con pid 1 porque se cree que es el único proceso en la maquina, nuestro host le ha hecho creer a la máquina que solo existe él.
+
+- No esta instalado vim ni vi ni nano porque solo se ha instalado python en nuestro ejemplo. Sin embargo podemos crear y guardar cosas en el sistema, pero a la que salgas y vuelvas a entrar no tendrás los arhivos/programas creados/instalados debido a que las imágenes son efímeras.
+
+- En los docker no existen usuarios porque solo estas tu! Por eso por defecto eres root.
+
+- De todos modos nunca se entra por bash en las imagenes de docker, este ejemplo es de propósito educativo.
+
+
+- __Ejemplo otro Dockerfile__Esta vez con mas configuraciones cuando se ejecute, por ejemplo copiar un script desde nuestra máquina Host y ejecutarlo con python.
+
+```
+FROM python:latest
+
+WORKDIR /app
+
+COPY myapp.py /app
+
+CMD ["python","myapp.py"]
+```
+- Cuando se crea la imagen se ejecutan ciertas características.
+
+- `WORKDIR` Establece el directorio de trabajo para las instrucciones COPY, CMD... que lo siguen en el Dockerfile. Siempre usar rutas absolutas.
+- `COPY` Copia ficheros o directorios desde tu host y lo añade al sistema de ficheros del contenedor en la ruta destino.
+- `CMD ["executable","param1","param2"]` Solo puede haber un instruccion CMD en el Dockerfile, si listas más solo tendrá efecto la última. En este ejemplo es un `$ python myapp.py`.
+
+
+- __Problema:__ Si por ejemplo necesitamos instalar php 7 pero lo tenemos instalado en nuestra máquina local.
+
+- __Solución__ Mapear con el parámetro `-v` (volumen)
+
+
+- Un volumen es un directorio o un fichero en el docker engineque se monta directamente en el contenedor. Podemos montar varios volúmenes en un contenedor y en varios contenedores podemos montar un mismo volumen.
+
+![Mapping](images/mappingDocker.jpeg)
+
+- Especificamos que directorio queremos que se incluya en el docker cuando se ejecute, Antes del `:` se especifica tu ruta __absoluta__, despues la ruta dentro del docker.
+- `$ docker run -it -v $(pwd)/app:/app` Especificamos $(pwd) por no poner /home/usuario/... __Mas corto y rápido.__
+
+
+- Con un Dockerfile especificamos una instalación cerrada, lista para darla al publico
+
+lo de los volumenes: ejecutar los contenedores
+
+
+
+## Distribución al mundo
+
+`$ docker login`
+
+
+`$ docker tag img-kevin:latest kvnk0/img-kevin:lab1`
+
+
+`$ docker push kvnk0/img-kevin:lab1`
+
+
+hacer un pull del de luis, ver su etiqueta con docker images, vemos que tiene de etiqueta labdock y entonces....
+
+$ docker pull luisf10/img-luishello:labdock
+
+
+Con $ docker images podemos ver los que estan, vemos que hay dos repositorios con el mismo identificador
+
+
+## nginx, servidor web
+
+docker run -d nginx   -d para ejecucion en segundo plano
+
+docker ps para ver los docker ejecuandose
+
+expose 80 para abrir por el puerto 80
+
+abrir firefox y poner tu direccion del servidor, debe de parecer
+
+Welcome to nginx!
+
+
+
+ejecuta dentro del contenedor del hash la bash
+
+$ docker exec -it cd7a61ee9ad3 bash
+
+
+archivo conf.d en bases de datos, cms.. destinado a poner archivos de configuracin tuyos, para que no se pise con la configuracin del fabricante
+
+
+archivo /usr/share/nginx/htmlindex.html, en este archivo cuando se visita la pagina direccionGoogleCloud/ se visita por defecto la pagina /index.html por lo que aparece el archivo de esa pagina
+
+
+/etc/nginx/conf.d/default.conf se establecen los parametros iniciales de configuracion
+
+
+dentro del archivo esta
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+    }
+
+
+que establece que por defecto / 
+
+
+crear una pagina con docker, te creas el archivo index.html
+
+$ docker run -d -v $(pwd):/usr/share/nginx/html -p 80:80 nginx
+
+1º paso development, desarollo
+2º paso publicacion, construimos
+3º paso produccion
+
+
+$ docker build . -t miServer	#miServer ????
+
+
+
+requirements.txt ¿que es? archivo donde pone que archivos instalar para una aplicacion
+
+
+
+## API-REST
+
+para poder hacer peticiones a un servidor y manipular asi las peticiones en el servidor
+
+
+operaciones CRUD (Crear, Leer, Actualizar y Borrar") eso en ingles
+
+
+si quieres leer, read haces un get al navegador
+si quieres creae, haces un post al navegador
+borrar, delete al navegador
+actualizar o update, put o patch
+
+
+
+cuando hacemos un end point http, el primer segmento es el recurso (resource)
+
+
+
+Recurso
+----------
+/perfil
+
+
+en get:
+
+si no pones nada ( /perfil/) te bajas todos los subdirectorios de (/perfil/)
+
+
+lo normal es poner un identificador, /perfil/<id>, por ejemplo /perfil/2
+
+
+en post:
+
+en la peticion http lo primero que hay son headers, despues el body (no confundir con lo de html!!) 
+
+dentro de headers hay content-type que normalmente pone text/html
+
+cuando se creo algo en el post en el body van los datos necesario spara crear ese recurso
+
+¿como genera el navegador un metodo post? por ejemplo cuando se envía un formulario en un json, se espera respuesta con un ok
+
+
+
+
+# Extras
+
+- Tests de regresion: si rompo algo nuevo puedo volver a la version anterior
+
+- `usermod` y `useradd` Modifica los archivos de cuentas del sistema.
+

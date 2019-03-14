@@ -58,7 +58,7 @@ done
 - `$ gsutil ls` Listar buckets
 - `$ ./scriptGenerarUsuarios| gsutil cp - gs://NombreBucketUnico/users.log` Salida de un archivo copiarlo al archivo users.log dentro del bucket.
 - `$ gsutil cat gs://NombreBucketUnico/users.log` Imprime del archivo
-- `$ gsutil -m acl ch -r -u allUsers:R gs://NombreBucketUnico/users.log` Ni idea de lo que hace esto, ale a buscar.
+- `$ gsutil -m acl ch -r -u allUsers:R gs://NombreBucketUnico/users.log` Parar cambiar los ACL de un objeto y convertirle en público.
 
 - `$ curl 'https://grepitout.com/wp-content/uploads/2017/10/Mountain.jpg'| gsutil cp - gs://NombreBucketUnico/sun.jpg` Guardar un archivo descargado nombrándolo sun.jpg.
     - Parámetro `-` del cp para aceptar parámetros por stdin.
