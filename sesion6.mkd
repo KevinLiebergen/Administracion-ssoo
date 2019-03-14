@@ -26,11 +26,10 @@
 
 - Docker, imágenes que encapsulan contenedores de software, se ejecuta sobre el mismo kernel de Linux.
 
-| D1   | D2   |   D3 |   |   |
-|------|------|-----:|---|---|
-| Mismo | Sistema | Operativo |   |   |
-| Mismo   | Hardware| HW   |   |   |
-|      |      |      |   |   |
+| D1   | D2   |   D3 |
+|------|------|-----:|
+| Mismo | Sistema | Operativo |
+| Mismo   | Hardware| HW   |
 
 
 - D1, D2, D3 están aislados, containerization
