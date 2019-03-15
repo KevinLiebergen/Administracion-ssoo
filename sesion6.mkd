@@ -39,15 +39,19 @@
 - De una misma imagen se pueden ejecutar varios contenedores.
 - Actualizaciones incrementales en docker hub, significa que se descargan por capas, por ello es tan rapido el pull cuando se descarga una imagen.
 
+### Comandos básicos
 
-
-- `$ docker images` para ver tus imagenes locales
+- `$ docker images` Ver tus imagenes locales
 - `$ docker ps` Ver las imágenes en ejecución
+- `$ docker pull` Descarga un pull desde hub.docker
+- `$ docker build` Construye una __nueva imagen__ desde el código
+- `$ docker create` Crea un nuevo __contenedor__.
+- `$ docker run` Crea un nuevo __contenedor__ en la imagen especificada y __además luego lo ejecuta__. Parámetro `-d` para segundo plano.
+- `$ docker stop 1fa4ab2cf395` El hash especificado es el que se muestra en `docker ps`
 
+### Creación imagen
 
-
-
-- Para crear una imagen docker se necesita un archivo denominado `Dockerfile`. Primer Dockerfile creado unicamente descargando python.
+- Para crear una imagen de docker (`build`) se necesita un archivo denominado `Dockerfile`. Primer ejemplo de Dockerfile creado unicamente descargando python.
 
 
 ```
@@ -59,28 +63,28 @@ FROM python:latest
     - A la derecha del `:` especifica que tag/version descargar.
 
 
-- `$ docker build . -t img-kevin:latest` Para ejecutar y descargar la imagen.
+- `$ docker build . -t img-kevin:latest` Para construir la imagen y darle un nombre.
     - `-t` Etiqueta una imagen nombrándola latest.
     - El nombre de la imagen se llamara img-kevin.
 
 
-- `$ docker run -it img-kevin bash` Para abrir la bash de la imagen.
-    - `-i` Interactive especificas un comando como bash y se te abre
-    - Al dar a enter te aparece: `root@c24266235333:/#`
+- `$ docker run -it img-kevin bash` Para crear un nuevo contenedor con la imagen especificada, además se ejecuta la bash.
+    - `-i` Interactive, especificas un comando como bash y se te abre
+    - Al dar a enter te aparece: `root@c24266235333:/#` (la shell).
 
-- El número despues del @ es el numero de identificador, las imágenes son efímeras, cada vez que se abre aparece un número distinto.
+- El número despues del @ es el numero de identificador, las imágenes son __efímeras__, cada vez que se abre aparece un número distinto.
 
 
 - Si haces un `# ps ax` ves que solo esta ejecutandose bash y ps ax, bash con pid 1 porque se cree que es el único proceso en la maquina, nuestro host le ha hecho creer a la máquina que solo existe él.
 
-- No esta instalado vim ni vi ni nano porque solo se ha instalado python en nuestro ejemplo. Sin embargo podemos crear y guardar cosas en el sistema, pero a la que salgas y vuelvas a entrar no tendrás los arhivos/programas creados/instalados debido a que las imágenes son efímeras.
+- No esta instalado vim ni nano ni nada porque solo se ha instalado python en nuestro ejemplo. Sin embargo podemos crear y guardar cosas en el sistema, pero a la que salgas y vuelvas a entrar no tendrás los arhivos/programas creados/instalados debido a que las imágenes son efímeras.
 
-- En los docker no existen usuarios porque solo estas tu! Por eso por defecto eres root.
+- En los docker no existen usuarios porque solo estas tu! Por eso por defecto en la bash eres root.
 
 - De todos modos nunca se entra por bash en las imagenes de docker, este ejemplo es de propósito educativo.
 
 
-- __Ejemplo otro Dockerfile__Esta vez con mas configuraciones cuando se ejecute, por ejemplo copiar un script desde nuestra máquina Host y ejecutarlo con python.
+- __Ejemplo otro Dockerfile__ Esta vez con más configuraciones cuando se ejecute, por ejemplo copiar un script desde nuestra máquina Host y ejecutarlo con python.
 
 ```
 FROM python:latest
@@ -98,148 +102,114 @@ CMD ["python","myapp.py"]
 - `CMD ["executable","param1","param2"]` Solo puede haber un instruccion CMD en el Dockerfile, si listas más solo tendrá efecto la última. En este ejemplo es un `$ python myapp.py`.
 
 
-- __Problema:__ Si por ejemplo necesitamos instalar php 7 pero lo tenemos instalado en nuestra máquina local.
+- Creamos volúmenes mapeando con el parámetro `-v` (volumen)
 
-- __Solución__ Mapear con el parámetro `-v` (volumen)
-
-
-- Un volumen es un directorio o un fichero en el docker engineque se monta directamente en el contenedor. Podemos montar varios volúmenes en un contenedor y en varios contenedores podemos montar un mismo volumen.
+- Un volumen es un directorio o un fichero en el docker engine que se monta directamente en el contenedor. Podemos montar varios volúmenes en un contenedor.
 
 ![Mapping](images/mappingDocker.jpeg)
 
 - Especificamos que directorio queremos que se incluya en el docker cuando se ejecute, Antes del `:` se especifica tu ruta __absoluta__, despues la ruta dentro del docker.
+
 - `$ docker run -it -v $(pwd)/app:/app` Especificamos $(pwd) por no poner /home/usuario/... __Mas corto y rápido.__
 
-
 - Con un Dockerfile especificamos una instalación cerrada, lista para darla al publico
-
-lo de los volumenes: ejecutar los contenedores
-
 
 
 ## Distribución al mundo
 
-`$ docker login`
+- Necesario cuenta en [hub.docker.com](https://hub.docker.com/)
+
+- Una vez tenemos cuenta nos logueamos desde la terminal
+
+- `$ docker login`
+
+- `$ docker tag img-kevin:latest kvnk0/img-kevin:lab1` Asignamos una etiqueta
+    - `img-kevin:latest`
+    - `kvnk0/img-kevin:lab1`
 
 
-`$ docker tag img-kevin:latest kvnk0/img-kevin:lab1`
+- `$ docker push kvnk0/img-kevin:lab1` Subimos a la página especificando la imagen.
 
 
-`$ docker push kvnk0/img-kevin:lab1`
-
-
-hacer un pull del de luis, ver su etiqueta con docker images, vemos que tiene de etiqueta labdock y entonces....
-
-$ docker pull luisf10/img-luishello:labdock
-
-
-Con $ docker images podemos ver los que estan, vemos que hay dos repositorios con el mismo identificador
+- Descargar haciendo un pull.
+- Hacer un pull del de luis viendo en su cuenta, ver que tag tiene (En su caso `labdock`)
+- `$ docker pull luisf10/img-luishello:labdock`
 
 
 ## nginx, servidor web
 
-docker run -d nginx   -d para ejecucion en segundo plano
+- `$ docker run -d nginx` 
+    `-d` Para ejecución en segundo plano
+    - Docker al ver que no tiene ningun nginx se encarga de realizar automáticamente un pull.
 
-docker ps para ver los docker ejecuandose
+- Es necesario mapear un puerto que se abre desde el Docker nginx hasta el host local para poder acceder, esto es realiza cuando se ejecuta un `docker run`.
+- `--expose`, `-p` `localPort:DockerPort`
+- `$ docker run -d -p 8080:80 nginx`
 
-expose 80 para abrir por el puerto 80
+![PortMapping](images/portMapping.png)
 
-abrir firefox y poner tu direccion del servidor, debe de parecer
 
+- Cuando abras el navegador y escribas tu direccion del servidor debe de parecer algo así, primero tienes que habilitar el puerto desde GoogleCloud!.
+
+```
 Welcome to nginx!
+```
 
+- `$ docker exec -it cd7a61ee9ad3 bash` Ejecuta dentro del contenedor específico la bash.
 
+####  Configuración del servidor
 
-ejecuta dentro del contenedor del hash la bash
+- `conf.d` Directorio con ficheros de configuración en bases de datos, cms.. Cuidado cuando tocas allí
 
-$ docker exec -it cd7a61ee9ad3 bash
+- Cuando se visita la dirección principal del servidor nginx (123.45.67.7/) se visita por defecto la página `/index.html`
+- `/etc/nginx/conf.d/default.conf` Se establecen los parámetros iniciales de configuración donde se indica que por defecto si no pone nada se visite `/index.html`. En esta parte exactamente.
 
-
-archivo conf.d en bases de datos, cms.. destinado a poner archivos de configuracin tuyos, para que no se pise con la configuracin del fabricante
-
-
-archivo /usr/share/nginx/htmlindex.html, en este archivo cuando se visita la pagina direccionGoogleCloud/ se visita por defecto la pagina /index.html por lo que aparece el archivo de esa pagina
-
-
-/etc/nginx/conf.d/default.conf se establecen los parametros iniciales de configuracion
-
-
-dentro del archivo esta
-
+```
     location / {
         root   /usr/share/nginx/html;
         index  index.html index.htm;
     }
+```
+
+- La plantilla del archivo index.html se encuentra en `/usr/share/nginx/htmlindex.html`
+
+- `$ docker run -d -v $(pwd):/usr/share/nginx/html -p 80:80 nginx`
+
+- `$ docker build . -t miServer` miServer será el nombre de la etiqueta.
 
 
-que establece que por defecto / 
+## API-REST / Flask
 
+- Para poder hacer peticiones a un servidor y manipular asi las peticiones en él.
 
-crear una pagina con docker, te creas el archivo index.html
+- Manipular operaciones CRUD (Crear, Leer, Actualizar y Borrar").
 
-$ docker run -d -v $(pwd):/usr/share/nginx/html -p 80:80 nginx
+- Si quieres:
+    - Leer, haces un get al navegador.
+    - Create, post al navegador.
+    - Borrar, delete al navegador.
+    - Actualizar, put o patch.
 
-1º paso development, desarollo
-2º paso publicacion, construimos
-3º paso produccion
+- Diferencias cuando se llama al recurso /perfil mediante Get o Post
 
+- En get:
 
-$ docker build . -t miServer	#miServer ????
+    - Si no pones nada ( /perfil/) te bajas todos los subdirectorios de (/perfil/)
+    - Lo normal es poner un identificador, /perfil/<id>, por ejemplo /perfil/2
 
+- En post:
 
-
-requirements.txt ¿que es? archivo donde pone que archivos instalar para una aplicacion
-
-
-
-## API-REST
-
-para poder hacer peticiones a un servidor y manipular asi las peticiones en el servidor
-
-
-operaciones CRUD (Crear, Leer, Actualizar y Borrar") eso en ingles
-
-
-si quieres leer, read haces un get al navegador
-si quieres creae, haces un post al navegador
-borrar, delete al navegador
-actualizar o update, put o patch
-
-
-
-cuando hacemos un end point http, el primer segmento es el recurso (resource)
-
-
-
-Recurso
-----------
-/perfil
-
-
-en get:
-
-si no pones nada ( /perfil/) te bajas todos los subdirectorios de (/perfil/)
-
-
-lo normal es poner un identificador, /perfil/<id>, por ejemplo /perfil/2
-
-
-en post:
-
-en la peticion http lo primero que hay son headers, despues el body (no confundir con lo de html!!) 
-
-dentro de headers hay content-type que normalmente pone text/html
-
-cuando se creo algo en el post en el body van los datos necesario spara crear ese recurso
-
-¿como genera el navegador un metodo post? por ejemplo cuando se envía un formulario en un json, se espera respuesta con un ok
-
-
-
+    - En las peticiones http hay headers y despues el body.
+    - Dentro de cada header o cabecera se encuentran los content-type que indica el tipo de dato enviado(text/html, /text/css...)
+    - Cuando se crea algo en el post, dentro del body van los datos necesarios para crear ese recurso
+    - Se genera un método post cuando se envía un formulario en un json debido a que no se puede por un get.
 
 # Extras
 
 - Tests de regresion: si rompo algo nuevo puedo volver a la version anterior
 
 - `usermod` y `useradd` Modifica los archivos de cuentas del sistema.
+
+- `requirements.txt` Archivo en el cual se notan los paquetes para que pip se encargue de instalarlos automáticamente.
+
 
