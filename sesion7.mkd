@@ -40,7 +40,6 @@ EXPOSE 80
 - Crear fichero `nginx.conf` y `Dockerfile` en ~/lb/load-balancer
 
 - load-balancer Dockerfile igual que el de servers
-```
 
 - Poner esto __SOLO__ en fichero `nginx.conf` del __load balancer__ para decirle que balancee las cargas
 
