@@ -143,7 +143,7 @@ CMD ["python","myapp.py"]
     - Docker al ver que no tiene ningun nginx se encarga de realizar automáticamente un pull.
 
 - Es necesario mapear un puerto que se abre desde el Docker nginx hasta el host local para poder acceder, esto es realiza cuando se ejecuta un `docker run`.
-- `--expose`, `-p` `localPort:DockerPort`
+- `-p` `localPort:DockerPort`
 - `$ docker run -d -p 8080:80 nginx`
 
 ![PortMapping](images/portMapping.png)

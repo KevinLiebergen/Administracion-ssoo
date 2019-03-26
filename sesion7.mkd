@@ -1,0 +1,151 @@
+# Sesión 7 - 2018/2019
+
+
+### Imagenes
+```
+$ docker pull luisf10/img-luishello:labdock
+$ ccarbonero/img-carbonerodocker
+$ ivanhn1/image-caronte:lab1
+```
+
+
+## Construir un balanceador de carga con Docker-compose y nginx como servidor web
+
+- La ruta se va a ejecutar sobre ~/lb.
+- Se van a crear 2 servidores web nginx y un balanceador de carga.
+- Por lo que para empezar es necesario crear un directorio __servers__ en el cual se establecerán los parámetros de configuración y otro directorio __load-balancer__.
+
+
+
+1. Empezando con los servers, accedemos a el y creamos un Dockerfile. Vamos a configurar el archivo nginx.conf por lo que vamos a crear un archivo nginx.conf y en el DockerFile especificamos que queremos insertar el nuestro (Por defecto nginx trae el suyo, vamos a añadirle una linea)
+
+2. Copiamos el archivo nginx.conf de la imagen a nuestro directorio con docker cp.
+    * `docker cp container_id:origen destino`
+    * `$ docker cp 881bd08c0b08:/etc/nginx/nginx.conf nginx.conf.original`
+
+3. Añadimos en el archivo `nginx.conf` del directorio servers:
+    - `add_header X-Backend-Server $hostname;`
+
+- Especificamos en el Dockerfile un run de nginx:latest, que copie el archivo modificado a su directorio /etc/nginx y abra el puerto 80.
+
+```
+FROM nginx:latest
+
+COPY nginx.conf /etc/nginx
+EXPOSE 80
+```
+
+- Creamos directorio html y dentro de él un fichero `index.html` que especifica que página mostrar al principio.
+
+- Crear fichero `nginx.conf` y `Dockerfile` en ~/lb/load-balancer
+
+- load-balancer Dockerfile igual que el de servers
+```
+
+- Poner esto __SOLO__ en fichero `nginx.conf` del __load balancer__ para decirle que balancee las cargas
+
+```
+	upstream app_servers {
+		server webserver_1:80;
+		server webserver_2:80;
+	}
+
+	access_log /var/log/nginx/access.log main;
+
+	server {
+		listen 80;
+
+		location / {
+			proxy_pass		http://app_servers;
+			proxy_redirect off;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Host $server_name;
+		}
+	}
+```
+
+- Por último crear __docker-compose.yml__ en ~/lb
+- Con services le especificamos que servicios debe crear, crea primero webserver_1 dentro de la carpeta servers ejecutando el Dockerfile y abriendo el puerto 80 a la máquina local, __no a internet__
+- Despues ejecuta load-balancer especificando que dependa de los dos servidores webs creados anteriormente, accediendo a la red desde el puerto 80.
+
+```
+version: '3'
+services:
+  webserver_1:
+    build:
+      context: ./servers
+      dockerfile: Dockerfile
+    expose:
+    - "80"
+  webserver_2:
+    build:
+      context: ./servers
+      dockerfile: Dockerfile
+    expose:
+    - "80"
+  lb:
+    build:
+      context: ./load-balancer
+      dockerfile: Dockerfile
+    depends_on:
+      - webserver_1
+      - webserver_2
+    ports:
+      - "80:80"
+```
+
+- Dentro de la carpeta ~/lb
+
+- `$ docker-compose build webserver_1` Construye el servicio webserver_1 especificado en el docker-compose.yml
+- `$ docker-compose build webserver_2`
+- `$ docker-compose build lb` Construye el servicio lb especificado en el docker-compose.yml
+
+- `$ docker-compose up lb` Ejecuta el servicio __lb__, como depende de webserver_1 y webserver_2 se ejecutan tambien esos servicios.
+
+- `$ docker-compose up -d --build`Construye la imagen y la ejecuta en segundo plano
+
+- `$ docker-compose stop` Para la imagen
+- `$ docker-compose logs` Imprime los logs a esa página web en ejecución.
+
+
+### Ejercicio
+
+- Crea un script (loadBalancer.sh) que realice 100 solicitudes a la página web creada y nos imprima por pantalla cuantas solicitudes han sido aceptadas por qué servidor.
+
+```bash
+#!/bin/bash
+
+
+numerof51=$(echo e2c899031f51)
+
+for i in $(seq 100)
+do
+	maquina=$(curl -I http://35.234.93.74/ | grep X-Backend | cut -d ':' -f 2 | tr -d ' ')
+
+	echo $maquina
+
+done
+
+```
+
+- `$ ./loadBalancer.sh 2> /dev/null | sort | uniq -c` Realiza las peticiones, ordena las peticiones y cuenta las peticiones de cada tipo.
+
+### Diferencia entre ports y expose (Docker)
+
+- `expose` Significa que el puerto docker esta reservado, no se puede utilizar, para que desde tu maquina puedas acceder al docker de dentro, pero desde internet no se puede acceder.
+    - `$ docker run --expose=1234 my_app`
+
+- `port, -p` `localPort:DockerPort` Es 80:80, de la maquina anfitriona a la docker, publica el puerto en la maquina exterior para que se localice desde fuera.
+    - `$ docker run -p 8080:80/tcp my_app`
+
+
+
+## Extra
+
+- `$ vimdiff nginx.conf nginx.conf.original` Para ver la diferencia entre archivos.
+- `curl -I webPage` Para ver solo las cabeceras.
+- `Kubernetes` Sistema para la gestión de aplicaciones en contenedores Docker permitiendo acciones como programar el despliegue, escalado y la monitorización de nuestros contenedores.
+- `Heartbeat` Daemon de docker que consulta el estado de los servicios y determinan si están disponibles. Envía controles de salud, por ejemplo una query nula para saber si está levantado el servicio.
+
