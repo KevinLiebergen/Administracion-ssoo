@@ -1,0 +1,198 @@
+## Sesion 8
+
+
+Para quitar un webserver de los 2 que tenemos funcionando con el ejercicio de la semana pasada.
+
+- Comentar (con #) un webserver en la parte depends_on del lb del docker-compose.yml
+- Comentar server webserver_1:80 del nginx.conf de load-balancer.
+
+### Herramientas para webservers
+
+- `Java Servlets` Es una clave en Java utlizada para ampliar las capacidades de un servidor.
+- `wsgi` (Web Server Gateway Interface). Interfaz simple entre servidores web, similar a Java Servlet.
+- `CGI` (Common Gateway Interface). Mecanismo de comunicación entre un navegador y un servidor web.
+- `FastCGI` Protocolo para interconectar programas interactivos con un servidor web. Es una variación de la CGI.
+- `fcgiwrap` Es un servidor simple para ejecutar aplicaciones CGI sobre FastCGI. El objetivo es proporcionar soporte CGI limpio al servidor web nginx.
+
+
+Vamos a instalar fcgiwrap en nuestro servidor nginx. Modificamos el DockerFile.
+
+- `RUN` en Dockerfile para ejecutar acciones al construir la imagen.
+
+```
+FROM nginx:latest
+
+RUN apt-get update
+RUN apt-get install fcgiwrap
+
+
+COPY html /usr/share/nginx/html
+COPY nginx.conf /etc/nginx
+#COPY default.conf /etc/nginx/conf.d
+
+EXPOSE 80
+```
+
+- Cuando se construye (`$ docker-compose build`) nos avisa de un error, esto ocurre debido a que a la hora de instalar fcgiwrap pregunta do you want continue?, y al no contestar peta.
+
+- Utilizar parámetro `-y`(Automatic yes to prompt). Sustituir por:
+
+`RUN apt-get -y install fcgiwrap`
+
+
+- Construir y ejecutar con
+
+    - `$ docker-compose up --build`
+    - o tambien
+    - `$ docker-compose build` y `$ docker-compose up`
+
+
+### Inter process communication
+
+`IPC` para interconectar dos procesos entre si. Debido al gran encapsulamiento de las imágenes es complicado que se comuniquen. Lo vamos a conseguir mediante `/cgi-bin/`
+
+
+
+- Añadir en `servers/default.conf`:
+
+```
+location /cgi-bin/ {
+
+      gzip off;
+
+      # Set the root to /usr/share/nginx (inside this location this means that we are
+      # giving access to the files under /usr/share/nginx/cgi-bin)
+      root  /usr/share/nginx;
+
+      # Fastcgi socket
+      fastcgi_pass  unix:/var/run/fcgiwrap.socket;
+
+      # Fastcgi parameters, include the standard ones
+      include /etc/nginx/fastcgi_params;
+
+      # Adjust non standard parameters (SCRIPT_FILENAME)
+      fastcgi_param SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+    }
+```
+
+- Redis es un almacén de clave-valor de código abierto que funciona como servidor de estructura de datos. Añadimos al DockerFile
+
+```
+  redis:
+    image: redis
+    expose:
+     - "6379"
+```
+
+- `image` Del dockerfile para ejecutar imágenes descargadas.
+
+
+Redis mantiene una tabla de clave valor, cuando solicitas /index.html puede devolver una página html.
+
+|     Key     |      Value     |
+|:-----------:|:--------------:|
+|   "Oscar"   |        1       |
+| /index.html | "<html> ....." |
+
+- Key funciona en memoria, no se puede poner en Value archivos de gigabytes de tamaño.
+- redis pensado para ser muy rapido, ser una caché.
+
+
+## Diferencia entre docker-compose run y exec
+
+Teniendo este comando `$ docker-compose exec redis redis-cli -h redis`
+
+__docker-compose run__ Crea un contenedor nuevo a partir de la imagen redis y en él ejecutamos la orden redis-cli (contenedor nuevo).
+
+__docker-compose exec__ Dentro del contenedor que ya esta creado y está en marcha además de lo que se esta ejecutando ejecutamos redis-cli (reutiliza uno que ya esta en marcha).
+
+
+Una vez ejecutamos `$ docker-compose exec redis redis-cli -h redis` (__Ojo, tiene que estar redis funcionando, `$ docker-compose up`__)se nos abre la consola de redis-cli, aquí podemos insertar objetos clave-valor.
+
+```
+redis:6379> get "pepe"
+(nil)
+redis:6379> set contador 100
+OK
+redis:6379> get "contador"
+"100"
+redis:6379> incr contador
+(integer) 101
+redis:6379> get contador
+"101"
+redis:6379> 
+```
+
+- Estas operaciones son atómicas para que no haya condiciones de carrera
+
+- `$ docker-compose exec redis redis-cli -h redis get contador`
+    - output: "101"
+
+
+- Para asegurarnos que los webservers tienen conexion con redis, dentro de webserver_1
+
+```
+root@e2c183dbad0e:/usr/share/nginx/cgi-bin# redis-cli -h redis ping
+PONG
+```
+
+- Dockerfile de servers
+
+```
+FROM nginx:latest
+
+RUN apt-get update
+RUN apt-get -y install fcgiwrap
+RUN apt-get -y install redis-tools
+
+COPY html /usr/share/nginx/html
+COPY nginx.conf /etc/nginx
+COPY default.conf /etc/nginx/conf.d
+
+
+COPY cgi-bin /usr/share/nginx/cgi-bin
+RUN chmod 755 /usr/share/nginx/cgi-bin/*.sh
+
+CMD /etc/init.d/fcgiwrap start && chmod 777 /var/run/fcgiwrap.socket && nginx -g 'daemon off;'
+
+EXPOSE 80
+```
+
+
+
+- Incrementar el número de visitas cuando se visita una página. Creamos un script que se ejecuta cuando visitamos la página `direccion/cgi-bin/hello.sh`
+- El script creado se alojará en servers/cgi-bin/hello.sh
+
+```bash
+#!/bin/bash
+
+CONTADOR=$(redis-cli -h redis incr contador);
+
+
+echo "Content-type: text/html";
+echo
+echo 
+#print your basic html tags.
+echo -ne "<html><head><title>Hello World!! </title></head>\n";
+echo -ne "<body><h1>$CONTADOR</h1></body>";
+echo -ne "<body><h1>Hello world</h1></body></html>\n";
+echo -ne "<body><h1>Hello world $QUERY_STRING</h1></body></html>\n";
+env
+```
+
+
+## Diferencia entre imagen y contenedor
+Una __imagen__ es una especie de plantilla. Dockerfile es el archivo de configuracion para crear imágenes. Ejecutando el comando docker build sobre ese DockerFile nos creará la imagen correspondiente, lista para crear un contenedor.
+
+Un __contendor__ son instancias en ejecución de una imagen. Sonlos que ejecutan cosas. El conceptode contenedor es como si restauráramos una máquina virtual a partir de un snapshot. A partir de una imagen podemos ejecutar varios contenedores.
+
+- `$ docker rmi <IMAGE ID>` Borrar imágenes docker.
+- `$ docker rm <CONTAINER ID>` Borrar contenedores docker.
+
+
+# Extra
+
+- Servidor nginx saca los modulos fuera.
+- Servidor apache deja los módulos dentro.
+- En vim `:new archivo` para crear nuevo archivo.
+- El `-it` solo para docker, no para docker-compose.
