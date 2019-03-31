@@ -196,3 +196,4 @@ Un __contendor__ son instancias en ejecución de una imagen. Sonlos que ejecutan
 - Servidor apache deja los módulos dentro.
 - En vim `:new archivo` para crear nuevo archivo.
 - El `-it` solo para docker, no para docker-compose.
+- docker-compose tambien te permite ejecutar en segundo plano con `-d`
