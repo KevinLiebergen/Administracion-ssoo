@@ -75,7 +75,7 @@ location /cgi-bin/ {
     }
 ```
 
-- Redis es un almacén de clave-valor de código abierto que funciona como servidor de estructura de datos. Añadimos al DockerFile
+- Redis es un almacén de clave-valor de código abierto que funciona como servidor de estructura de datos. Añadimos al docker-compose.yml
 
 ```
   redis:
