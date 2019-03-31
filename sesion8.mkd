@@ -84,7 +84,7 @@ location /cgi-bin/ {
      - "6379"
 ```
 
-- `image` Del dockerfile para ejecutar imágenes descargadas.
+- `image` Del docker-compose para ejecutar imágenes descargadas.
 
 
 Redis mantiene una tabla de clave valor, cuando solicitas /index.html puede devolver una página html.
