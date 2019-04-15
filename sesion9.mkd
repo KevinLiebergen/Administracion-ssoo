@@ -8,27 +8,27 @@
     - Los cambios no persisten.
 
 - ¿Cuál de las siguientes afirmaciones es falsa?
-    - nginx es base de datos distribuida.
+    - nginx es una base de datos distribuida.
 
 - ¿Cuál es correcta?
     - Una imagen puede ser ejecutada por mas de un contenedor
 
 
-Navegación inercial (robotica): pasa lo mismo con docker, muchos sistemas se dsarollan para que no dependan de estados y no produzcan erroes
+Navegación inercial (robotica): pasa lo mismo con docker, muchos sistemas se desarollan para que no dependan de estados y no produzcan errores
 
-<br>El problema de servicio de subastas escala muy mal, este es uno de los grandes problemas, ni con todo el dinero del mundo puedes arreglar la sobreutilizacion del cpu
+<br>El problema de servicio de subastas es que escala muy mal, este es uno de los grandes problemas, ni con todo el dinero del mundo puedes arreglar la sobreutilizacion de la cpu
 
-<br>Problema del ejercicio de subastas: Con muchos clientes existe caso de condicion de carrera.
+<br>Problema del ejercicio de subastas: Con muchos clientes existe caso de condición de carrera.
 
 <br>Solución: __pendiente mediante colas__ a la hora de subastar, comprar online
-solucion aun mas eficiente __peticion sincrona__,mas facil de implementar
+<br>Solucion aún mas eficiente __peticion sincrona__,más fácil de implementar
 
 
 __Ventaja del volumes__ Sin el volumes tienes que construir una imagen cada vez que modificas algo, sin embargo con volumes implementado en el docker-compose cuando la imagen se está ejecutando los cambios que hagas en los scripts en local lo cambias y no tienes que volver a construir y ejecutar  la imagen, ahorro de tiempo !!
 
-<br>Eso vamos a hacer para el ejercicio de subastas, crear un volumes en el docker-compose copiando el directorio con los scripts bid, auction y close. Cada vez que hagamos un cambio se actualiza en el momento. Una vez sabemos que funciona bien quitamos el vilumes para que no se sobreescriban los scripts sobre la /app
+<br>Eso vamos a hacer para el ejercicio de subastas, crear un volumes en el docker-compose copiando el directorio con los scripts bid, auction y close. Cada vez que hagamos un cambio se actualiza en el momento. Una vez sabemos que funciona bien quitamos el volumes para que no se sobreescriban los scripts sobre la /app
 
-Ejercicio de subastas, crear dos contenedores que permita le gaestión de subastas, deberá admitir 3 acciones, open siendo los parámetros `open articulo valorInicial`, bid para pujar siendo los articulos `bid articulo pujador valoraIncrementar` y close siendo `close articulo`. Para ejecutar las acciones es necesario hacerlo con `$ docker-compose run auction ./open mesa 10` La imagen se debe de llamar auction
+Ejercicio de subastas, crear dos contenedores que permita le gaestión de subastas, deberá admitir 3 acciones, open siendo los parámetros `open articulo valorInicial`, bid para pujar siendo los articulos `bid articulo pujador valoraIncrementar` y close siendo `close articulo`. Para ejecutar las acciones es necesario hacerlo con `$ docker-compose run auction ./open mesa 10` La imagen creada se debe de llamar auction
 
 - docker-compose-yml
 
@@ -131,20 +131,20 @@ Para hacer las pruebas con los scripts abrimos la shell y ejecutamos los scripts
 - `$ docker-compose build auction`
 
 ```
-$ docker-compose run auction ./open mesa 3`
+$ docker-compose run auction ./open mesa 3
     Subasta abierta
     OK
 ```
 
 ```
-$ docker-compose run auction ./bid mesa kevin 10`
+$ docker-compose run auction ./bid mesa kevin 10
     Subasta bid
     (integer) 13
     OK
 ```
 
 ```
-$ docker-compose run auction ./close mesa`
+$ docker-compose run auction ./close mesa
     Subasta cerrada
     USER=kevin, PRIZE=13
 ``` 
@@ -193,6 +193,11 @@ services:
 
 
 ### Gestión de almacenamiento
+
+```
+$ echo Hola > /dev/sdb
+$ cat /dev/sdb | hexdump -C -n 512
+```
 
 - `tar xvf /dev/sdb` Descomprimir partición
     - x extract
@@ -245,6 +250,8 @@ Para rellenar de ceros un disco (forma de formatearlo):
 
 
 - `umount` Desmontar sistemas de ficheros
+- `mount` Montarlos
+    - `$ mount /dev/sdd ~/mnt/`
 
 
 ### Extra
