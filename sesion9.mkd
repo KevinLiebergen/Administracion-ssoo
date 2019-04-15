@@ -1,0 +1,268 @@
+## Sesion 9
+
+
+### Correción examen
+
+
+- Si un script modifica el sistema de archivos del contenedor docker en el que se ejecuta ¿Qué ocurre con dichos cambios cuando el contenedor finaliza?
+    - Los cambios no persisten.
+
+- ¿Cuál de las siguientes afirmaciones es falsa?
+    - nginx es base de datos distribuida.
+
+- ¿Cuál es correcta?
+    - Una imagen puede ser ejecutada por mas de un contenedor
+
+
+Navegación inercial (robotica): pasa lo mismo con docker, muchos sistemas se dsarollan para que no dependan de estados y no produzcan erroes
+
+<br>El problema de servicio de subastas escala muy mal, este es uno de los grandes problemas, ni con todo el dinero del mundo puedes arreglar la sobreutilizacion del cpu
+
+<br>Problema del ejercicio de subastas: Con muchos clientes existe caso de condicion de carrera.
+
+<br>Solución: __pendiente mediante colas__ a la hora de subastar, comprar online
+solucion aun mas eficiente __peticion sincrona__,mas facil de implementar
+
+
+__Ventaja del volumes__ Sin el volumes tienes que construir una imagen cada vez que modificas algo, sin embargo con volumes implementado en el docker-compose cuando la imagen se está ejecutando los cambios que hagas en los scripts en local lo cambias y no tienes que volver a construir y ejecutar  la imagen, ahorro de tiempo !!
+
+<br>Eso vamos a hacer para el ejercicio de subastas, crear un volumes en el docker-compose copiando el directorio con los scripts bid, auction y close. Cada vez que hagamos un cambio se actualiza en el momento. Una vez sabemos que funciona bien quitamos el vilumes para que no se sobreescriban los scripts sobre la /app
+
+Ejercicio de subastas, crear dos contenedores que permita le gaestión de subastas, deberá admitir 3 acciones, open siendo los parámetros `open articulo valorInicial`, bid para pujar siendo los articulos `bid articulo pujador valoraIncrementar` y close siendo `close articulo`. Para ejecutar las acciones es necesario hacerlo con `$ docker-compose run auction ./open mesa 10` La imagen se debe de llamar auction
+
+- docker-compose-yml
+
+```yaml
+version: '3'
+services:
+  redis:
+    image: redis
+    expose:
+    - "6379"
+  
+  auction:
+    image: auction:latest
+    build:
+      context: ./auctions
+      dockerfile: Dockerfile
+    depends_on:
+     - redis
+    volumes:                    # Esto al principio lo ponemos y en el Dockerfile el
+     - ./auctions/scripts:/app  # COPY lo comentamos, cuando nos aseguremos que lo tenemos
+                                # bien lo quitamos y el COPY del Dockerfile descomentamos
+    expose:
+    - "80"
+```
+
+- auctions/Dockerfile
+
+```
+FROM debian:latest
+
+RUN apt-get update
+RUN apt-get -y install redis-tools
+
+WORKDIR /app
+
+COPY scripts/ /app  #Se comenta al principio
+
+RUN chmod 755 /app/*
+```
+
+- auctions/scripts/open
+
+```bash
+#!/bin/bash
+
+echo "Subasta abierta"
+
+articulo=$1
+precioSalida=$2
+
+redis-cli -h redis set $articulo $precioSalida
+
+#redis-cli SERVIDOR set key valor
+```
+
+- auctions/scripts/bid
+
+```bash
+#!/bin/bash
+
+echo "Subasta bid"
+
+articulo=$1
+pujador=$2
+incrementoPuja=$3
+
+
+redis-cli -h redis INCRBY $articulo $incrementoPuja
+
+redis-cli -h redis set "$articulo-max-bidden" $pujador
+
+```
+
+- auctions/scripts/close
+
+```bash
+#!/bin/bash
+
+echo "Subasta cerrada"
+
+articulo=$1
+
+usuario=$(redis-cli -h redis get "$articulo-max-bidden")
+precio=$(redis-cli -h redis get $articulo)
+
+echo "USER=$usuario, PRIZE=$precio"
+```
+
+
+Para hacer las pruebas con los scripts abrimos la shell y ejecutamos los scripts
+
+- `$ docker-compose run auction bash` Abrir la shell del contenedor debian
+    - `root@128d7d083c4b:/app# ping redis` Para asegurarnos que tenemos conexion con redis
+    - `root@128d7d083c4b:/app# ./open ordena 5` Lo mismo con bid y close
+
+<br>Comentamos la parte volumes del docker-compose y descomentamos la de docker-Dockerfile, y construimos todo
+
+- `$ docker-compose build redis`
+- `$ docker-compose up redis`
+- `$ docker-compose build auction`
+
+```
+$ docker-compose run auction ./open mesa 3`
+    Subasta abierta
+    OK
+```
+
+```
+$ docker-compose run auction ./bid mesa kevin 10`
+    Subasta bid
+    (integer) 13
+    OK
+```
+
+```
+$ docker-compose run auction ./close mesa`
+    Subasta cerrada
+    USER=kevin, PRIZE=13
+``` 
+
+
+```
+$ ln -s docker-compose.dev.yml docker-compose.yml
+$ls -la
+
+docker-compose.dev.yml
+docker-compose.pro.yml
+docker-compose.yml -> docker-compose.pro.yml
+```
+
+Enlace simbolico para cuando ejecutes docker-compose se ejecuta el de produccion, mientras tocas el de desarollo
+
+
+```yaml
+version: '3'
+services:
+  redis:
+    image: redis
+    expose:
+    - "6379"
+  
+  auction:
+    image: auction:latest
+    build:
+      context: ./auctions
+      dockerfile: Dockerfile
+    depends_on:
+     - redis
+    environment:
+     - REDIS_LOCATION=redis
+```
+
+
+- `environment: ` Para crear variables de entorno, ejecutar la bash y ver `env` para ver que esta REDIS_LOCATION=redis
+
+<br>Para que en los scripts open, bid, close no vaya a fuego la variable $REDIS_LOCATION, de este modo en los scripts en vez de poner `redis-cli -h redis INCRBY $articulo $incrementoPuja` escribir `redis-cli -h $REDIS_LOCATION INCRBY $articulo $incrementoPuja`
+
+<br>Todo lo que pongamos a fuego, mosquearnos!!!! porque en nuestro entorno puede funcionar pero en el otro no, por lo que hay que poner variables de entorno
+
+
+<br>Tu en producción no puedes hacer nada porque solo descargas, se construye todo en desarollo, develop. Lo que tengo que hacer es actualizar el docker-compose del desarollo para que se enlace bien con el de produccion y el de produccion solo tenga que ejecutar.
+
+
+### Gestión de almacenamiento
+
+- `tar xvf /dev/sdb` Descomprimir partición
+    - x extract
+    - v verbose
+    - f donde quiero que se me guarden las cosas
+
+<br>tar tiene controlados todos lo bits, si comprimes un disco de 10 gb ocupa algo menos de 10 gb, aunque esten vacios, si escribes un fichero que ocupa 1 mb y lo comprimes seguirán ocupando 10 gb.
+<br>Sin embargo el tar-image.img ocupa 10 gb, si lo comprimes con .gz ocupa comprimido 38 megas, ¿¿por qué?? Porque los bloques vacios de .gz __(zip)__ no los usa.
+
+
+- `lsblk` Lists information about all or the specified block.
+
+```
+$ lsblk
+
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   10G  0 disk 
+└─sda1   8:1    0   10G  0 part /
+sdb      8:16   0   10G  0 disk 
+sdc      8:32   0   10G  0 disk 
+sdd      8:48   0  200G  0 disk 
+sde      8:64   0   10G  0 disk
+```
+
+La gestión de almacenamiento se hace mediante superusuario, nos metemos como ello, `sudo su`
+
+- `mkfs` Para crear un sistema de fichero en Linux (Make Filesystem)
+    - `-t` Tipo
+    - `# mkfs -t ext4 /dev/sdd` Crear un ext4 sobre el bloque /dev/sdd
+
+
+- `dd` Data Duplicator. Con dd además puedes grabar una imagen .iso!.
+    - `if` Input File
+    - `Of` Output file
+    - `bs` Blocksize
+    - `count` Copies only this number of blocks
+    - `seek` Seeks this number of blocks in the output, instead of writing to the beginning.
+
+- `$ yes | dd bs=1M count=1 seek=8 of=outputfile` Se escribe un bloque de 1 mega (bs=1M) una sola vez (count=1), se empieza a escribir en el bloque 8 (seek=8) Por lo que el tamaño total sera de 9 Mb.
+
+- `# dd if=/dev/sdb of=tar-image.img &` & del final para ejecutarlo en segundo plano
+
+
+Para rellenar de ceros un disco (forma de formatearlo):
+<br>`# dd if=/dev/zero of=/dev/sdb`
+
+
+`urandom` para que se escriban con 0 y 1 aleatoriamente, especie de formateo, no se formatea porque no se pone a 0 los bits pero se rellenan con números aleatorios, si esto lo haces unas cuantas veces no hay ningún maquina que recupere la informacion de tu disco.
+<br>`# dd if=/dev/urandom of=/dev/sdb`
+
+
+- `umount` Desmontar sistemas de ficheros
+
+
+### Extra
+
+- __Truco sysadmins__ Hacer git init en la raiz (/) de los contenedores docker para tener un historial Y SABER DE TODO LO QUE HAS HECHO.
+
+- Por convenio la respuesta de una pagina web debe ser inferior a 200 ms.
+
+- En Facebook si se cae la cache, reconstruir la cache tarda horas, tienen caches redundantes, si se cae es necesario regenerar el contenido.
+
+- `rsync` Herramienta para realizar transferencia rápida de archivos de forma incremental (copia las diferencias)
+
+
+- vim
+    - `:vnew archivo1`	Dividir la pantalla en vertical.
+    - `:new archivo1`	Dividir la pantalla en horizontal.
+    - `:!mkdir directorioNuevo` con ! puedes correr un comando.
+    
+
+- vim plugin linter
+
