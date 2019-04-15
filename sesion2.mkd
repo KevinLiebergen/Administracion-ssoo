@@ -223,6 +223,10 @@
 - `cut` Elimina secciones de cada linea
     - `-c` Para deliminar por caracteres
     - `-f` Delimitar por filas
+    - `-d` Especifica la delimitación en el siguiente caracter
+    
+- Por __defecto__ si escribes cut -f 2 la delimitacion será de la tabulación, igual que escribir
+    - `cut -d '\t' -f 2`
 
 ```bash
     $ cat /etc/passwd | cut -d ':' -f 1-4

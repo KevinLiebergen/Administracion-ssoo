@@ -105,9 +105,11 @@ services:
 
 - `$ docker-compose up -d --build`Construye la imagen y la ejecuta en segundo plano
 
-- `$ docker-compose stop` Para la imagen
+- `$ docker-compose stop` Para la imagen, pero no la borra
 - `$ docker-compose logs` Imprime los logs a esa página web en ejecución.
-
+- `$ docker ps -a` Te muestra todos los containers, los parados y ejecutados.
+- `$ docker ps -a -q` Te muestra solo el id de cada container.
+- `$ docker rm $(docker ps -a -q)` Elimina todos los contenedores, hasta los parados
 
 ### Ejercicio
 
