@@ -1,0 +1,322 @@
+## Sesion 10
+
+2 formas de expandir memoria, comprando un disco duro de gran tamaño o muchos de pequeño tamaño (Más barato, aunque aumenta la probabilidad de fallo global cuantos mas discos tenga). Solución robotizamos
+
+<br>Primero creamos un sistemas de archivos con mkfs, despues lo montamos sobre la carpeta que queramos
+- `$ mkfs -t ext4 /dev/sdb`
+- `$ mkdir servidor`
+- `$ mount /dev/sdb servidor/`
+- `$ df -h`
+
+
+Por defecto en los sistemas Linux el usuario tiene un 5% de memoria sin tocar, por si cuando estas moviendote te quedas sin memoria y peta te metas en root y tengas algo de movilidad para hacer cosas.
+
+<br>Directorio `lost+found` sirve para colocar alli bloques con un inode asociado pero sin nombre, es decir son huérfanos, casos bastantes raros y el profe nunca lo ha utilizado pero si aparece algo allí estamos jodidos, el profe normalmente lo borra.
+
+
+- `chown` Cambia el propietario de un archivo o directorio.
+    - `$ chown -R nuevousr directorio` Cambia el propietario de archivo1 archivo2, etc. que pasará a ser nuevousr
+
+- `rsync` comando muy útil. Realiza transferencia rápida de archivos de forma incremental (copia las diferencias)
+    - `-a` engloba muchos flags (copie la propiedad, permisos, todo)
+    - `-v` Verbose mode
+
+Vamos a copiar el sistema de ficheros servidor creado antes en una carpeta creada temporal, lo vamos a abortar cuando lleve poco tiempo.
+
+<br>`$ rsync -av servidor/ temporal/`
+
+<br>Miramos con df -h que se ha copiado un poco, si volvemos a copiarlo con rsync  mira los archivos iguales y se envian archivos incremenetales (sending incremental file list).
+
+<br>`$ rsync -av servidor/ temporal/`
+
+<br>Nos damos cuenta que empieza a copiar desde el ultimo que se envió anteriormente. Importante y muy útil para crear backups.
+
+
+<br>Si creamos un archivo y ejecutamos el comando anterior únicamente se copiará el archivo copiado.
+
+```
+$ touch servidor/web_uno/FILE-0
+$ sudo rsync -av servidor/ temporal/
+
+
+sending incremental file list
+web_uno/FILE-0
+
+sent 130,161,772 bytes  received 244 bytes  28,924,892.44 bytes/sec
+total size is 130,129,247  speedup is 1.51
+
+```
+
+`speedup is 1.51` significa que ha ido 1.5 veces mas rapdio que si hbieras hecho un copy normal
+
+- Los enlaces duros no ocupan memoria! Son alias!!
+
+
+En cambio si borramos un archivo que esta copiado, por ejemplo borramos web_uno/FILE-0 tambien y ejecutamos rsync se borra en el destino si utilizas otra flag(--delete)
+- `$ sudo rsync -av --delete servidor/ temporal/`
+
+
+## Crontab
+
+Archivo de texto que posee una lista con todos los scripts a ejecutar a una hora determinada.
+
+<br>No confundir con Cron, que es el daemon que se ejecuta desde el instante en el que arranca el sistema.
+
+- `-e` Editar las tablas de ordenes programadas para el usuario root
+- `-l` Lista órdenes configuradas
+
+
+```bash
+$ crontab -l
+
+# Edit this file to introduce tasks to be run by cron.
+# 
+# Each task to run has to be defined through a single line
+# indicating with different fields when the task will be run
+# and what command to run for the task
+# 
+# To define the time you can provide concrete values for
+# minute (m), hour (h), day of month (dom), month (mon),
+# and day of week (dow) or use '*' in these fields (for 'any').# 
+# Notice that tasks will be started based on the cron's system
+# daemon's notion of time and timezones.
+# 
+# Output of the crontab jobs (including errors) is sent through
+# email to the user the crontab file belongs to (unless redirected).
+# 
+# For example, you can run a backup of all your user accounts
+# at 5 a.m every week with:
+# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
+# 
+# For more information see the manual pages of crontab(5) and cron(8)
+# 
+# m h  dom mon dow   command
+
+```
+
+Vamos a automatizar el copiado del directorio servidor/ para crear un backup. Escribimos `$ crontab -e` y añadimos la línea:
+<br>`* * * * * rsync -av --delete /home/kevin/servidor/ /home/kevin/temporal/`
+
+
+- Poner rutas absolutas en el crontab
+
+- `/home/kevin/servidor/` La barra del final es para copiar el contenido, sin el `/` te copia la carpeta en si
+
+
+Comandos del crontab
+
+- m minute
+- h hour
+- dom day of month
+- mon month
+- dow day of week
+
+
+<br>`m h dom mon dow command`
+<br>`* * *   *    *   comando`     El comando se ejecuta cada minuto.
+<br>`0 0 *   *    *   comando`     El comando se ejecutará a las 00:00.
+<br>`0 3 *   *    *   comando`     A las 03:00.
+
+
+
+Las órdenes de crontab deben ser silenciosas, no pueden sacar cosas por stdout, si lo sacamos por stdout se puede meter en un email y te lo envian.
+
+
+
+- Directorio __/var/log/syslog__ para ver los logs del sistema
+
+- Vemos los ultimos comandos con `$ tail /var/log/syslog`
+- `$ tail -f /var/log/syslog` (-f significa follow) No se va a desconectar, esperando nuevas entradas
+
+Probar este ejemplo
+<br>`$ tail -f /var/log/syslog`
+<br>y mientras este abierto poner en otra terminal
+<br>`$ logger hola mundo`
+<br>Ver que al otro lado le ha llegado un comando
+
+
+
+## RAID (Redundant Array Inexpensive Disks)
+
+Los dispositivos físicos son difícles de gestionar, gracias a los RAID se permiten el fallo de dos discos duros siempre que no pertenezcan al mismo grupo. Si un disco duro falla no afecta al rendimiento del sistema.
+
+<br>Existen tres razones por las que podemos querer un sistema con discos RAID.
+
+- __RAID 0__: Porque necesitamos enorme espacio de almacenamiento y además que sea __rápido__. Se duplica al sumar discos.
+
+![raid0](./images/raid0.png)
+
+- __RAID 1__: Deseamos __respaldar los datos__ de forma instantánea y automática. Mirroring.
+
+![raid1](./images/raid1.png)
+
+- __RAID 5__: __Ambas__ cosas. Distribuye la información de paridad entre todos los discos miembros del conjunto. Proporcion de redundancia, 1 bloque. Utilización para 3 discos o más.
+
+![raid5](./images/raid5.png)
+
+
+#### Mdadm
+
+Creación raid 0 con 2 dispositivos. `/dev/md0` Es el nombre del dispositivo a crear.
+    - `--raid-devices=` Para asignar el número de discos raid.
+    - `--level=0` Asignar el número de raid.
+    - En este caso los dispositivos a unir son /dev/sdb /dev/sdc.
+```
+$ sudo mdadm --create --level=0 --raid-devices=2 /dev/md0 /dev/sdb /dev/sdc
+
+mdadm: /dev/sdb appears to contain an ext2fs file system
+       size=10485760K  mtime=Wed Apr 24 08:48:25 2019
+Continue creating array? yes
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
+```
+
+Para tener un resumen rápido del dispositivo RAID con `-Q`.
+```
+$ sudo mdadm -Q /dev/md0
+
+/dev/md0: 19.98GiB raid0 2 devices, 0 spares. Use mdadm --detail for more detail.
+```
+
+
+Creamos un sistema de ficheros en ext4 para el raid /dev/md0 y lo montamos.
+
+```
+$ sudo mkfs -t ext4 /dev/md0
+
+mke2fs 1.43.4 (31-Jan-2017)
+Discarding device blocks: done
+Creating filesystem with 5238784 4k blocks and 1310720 inodes
+Filesystem UUID: d48e5039-ef57-4efa-90bf-f724d38e2eeb
+Superblock backups stored on blocks:
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208,
+	4096000
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (32768 blocks): done
+Writing superblocks and filesystem accounting information: done
+```
+
+Montamos el dispositivo /dev/md0 sobre la carpeta servidor.
+<br>`$ sudo mount /dev/md0 servidor/`
+
+```
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            286M     0  286M   0% /dev
+tmpfs            60M  3.4M   56M   6% /run
+/dev/sda1       9.8G  8.0G  1.4G  86% /
+tmpfs           297M     0  297M   0% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+tmpfs           297M     0  297M   0% /sys/fs/cgroup
+/dev/md0         20G   45M   19G   1% /home/kevin/servidor  #Creado por nosotros
+```
+
+Hemos montado sdb y sdc como un raid-0. Se lista en lsblk.
+```
+$ lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda      8:0    0   10G  0 disk
+└─sda1   8:1    0   10G  0 part  /
+sdb      8:16   0   10G  0 disk
+└─md0    9:0    0   20G  0 raid0 /home/kevin/servidor
+sdc      8:32   0   10G  0 disk
+└─md0    9:0    0   20G  0 raid0 /home/kevin/servidor
+sdd      8:48   0  200G  0 disk
+sde      8:64   0   10G  0 disk
+```
+
+Creación de raid-5
+
+`$ sudo mdadm --create --level=5 --raid-devices=3 /dev/md0 /dev/sdb /dev/sdc /dev/sde`
+
+Uno de los 3 discos sirve para redundancia, así que tenemos agregación y redundancia, con 3 discos de 10 gb tenemos 20 gb.
+
+<br>Para mostrar información más detallada.
+```
+$ sudo mdadm -Q --detail /dev/md0
+/dev/md0:
+        Version : 1.2
+  Creation Time : Wed Apr 24 10:58:42 2019
+     Raid Level : raid5
+     Array Size : 20955136 (19.98 GiB 21.46 GB)
+  Used Dev Size : 10477568 (9.99 GiB 10.73 GB)
+   Raid Devices : 3
+  Total Devices : 3
+    Persistence : Superblock is persistent
+
+    Update Time : Wed Apr 24 11:28:11 2019
+          State : clean
+ Active Devices : 3
+Working Devices : 3
+ Failed Devices : 0
+  Spare Devices : 0
+
+         Layout : left-symmetric
+     Chunk Size : 512K
+
+           Name : operaciones:0  (local to host operaciones)
+           UUID : 14a0461b:86597b94:cd596947:2fb309ee
+         Events : 19
+
+    Number   Major   Minor   RaidDevice State
+       0       8       16        0      active sync   /dev/sdb
+       1       8       32        1      active sync   /dev/sdc
+       3       8       64        2      active sync   /dev/sde
+```
+__Raid Devices__ Se refiere al número de raids que están configurados y __total devices__ al número de raids disponibles.
+<br>A parte se encuentra __spare devices__, son discos que están preparados para usarse pero por el momento no se van a utilizarse, están de reserva por si uno falla.
+
+
+Para reconfigurar el array para tener un raid activo se hace uso del parámetro `--grow`
+<br>`$ sudo mdadm --grow --raid-devices=4 /dev/md0`
+
+
+¿Por qué no detecta cuando añadimos 10 gb? Porque al inicio de la creación eran 20 gb y no se vuelve a mirar, para eso existe  __resize2fs__ (Para superusuarios).
+<br>Comando super simple y efectivo
+
+```
+$ resize2fs /dev/md0
+
+$ df -h
+/dev/md0 30 g
+```
+Y ahora sí que se ha actualizado.
+
+
+Raid se utiliza para aumentar almacenamiento, aunque lo normal se utilice para crear bloques, sistemas de almacenamiento, eficientes y seguros por redundancia.
+<br>Lo suyo es crear sobre raid LVM (Gestor de volúmenes lógicos). Es una capa de abastracción entre un dispositivo de almacenamiento y un sistema de ficheros.
+
+Para poder borrar un disco primero es necesario marcarlo como faulty.
+`$ sudo mdadm --manage --set-faulty /dev/md0 /dev/sdb`
+
+Y después ya podemos borrar con `-r` (remove).
+
+```
+$ mdadm /dev/md0 -r /dev/sdb
+mdadm: hot removed /dev/sdb from /dev/md0
+```
+
+Mirar para examen como crear un raid 10.
+
+### Extra
+
+El nuevo estándar es que __/media__ es donde el sistema monta medios extraíbles (USB), y __/mnt__ es para que montes tu cosas manualmente.
+
+<br>__/mnt__: Punto de montaje para un sistema de archivos montado temporalmente.
+<br>Este directorio se proporciona para que el administrador del sistema pueda montar temporalmente un sistema de archivos según sea necesario. El contenido de este directorio es un problema local y no debe afectar la manera en que se ejecuta ningún programa.
+<br>Este directorio no debe ser utilizado por los programas de instalación: en su lugar, debe utilizarse un directorio temporal adecuado que no esté utilizando el sistema.
+
+<br>__/media__: Punto de montaje para dispositivos extraíbles.
+<br>Este directorio contiene subdirectorios que se utilizan como puntos de montaje para medios extraíbles, como disquetes, cdroms y discos zip. Históricamente, se han utilizado otros lugares diferentes para montar medios extraíbles, como /cdrom, /mnt o /mnt/cdrom. La colocación de los puntos de montaje para todos los medios extraíbles directamente en el directorio raíz podría generar una gran cantidad de directorios adicionales en /. q
+
+- typedef para hacer contador++ en shell
+- `0 3 *   *    *   comando` Muchos dolores de cabeza, a las 3:00 pasa el crawler de google y realizar muchas peticiones si haces un backup
+- `fuser` Identifica los procesos mostrando su PID que están utilizando un fichero, una carpeta o un socket, además de poder matar dichos procesos.
+- Se puede conectar dispositivos externos al docker con --device o algo asi
+
+<br>Diferencia entre:
+
+- `sudo su`: No te mueves del directorio actual.
+- `sudo su -`: Te dirige al directorio /root.
