@@ -158,9 +158,9 @@ Los dispositivos físicos son difícles de gestionar, gracias a los RAID se perm
 #### Mdadm
 
 Creación raid 0 con 2 dispositivos. `/dev/md0` Es el nombre del dispositivo a crear.
-    - `--raid-devices=` Para asignar el número de discos raid.
-    - `--level=0` Asignar el número de raid.
-    - En este caso los dispositivos a unir son /dev/sdb /dev/sdc.
+- `--raid-devices=` Para asignar el número de discos raid.
+- `--level=0` Asignar el número de raid.
+- En este caso los dispositivos a unir son /dev/sdb /dev/sdc.
 ```
 $ sudo mdadm --create --level=0 --raid-devices=2 /dev/md0 /dev/sdb /dev/sdc
 
@@ -196,12 +196,9 @@ Allocating group tables: done
 Writing inode tables: done
 Creating journal (32768 blocks): done
 Writing superblocks and filesystem accounting information: done
-```
 
-Montamos el dispositivo /dev/md0 sobre la carpeta servidor.
-<br>`$ sudo mount /dev/md0 servidor/`
+$ sudo mount /dev/md0 servidor/
 
-```
 $ df -h
 Filesystem      Size  Used Avail Use% Mounted on
 udev            286M     0  286M   0% /dev
