@@ -286,9 +286,9 @@ Raid se utiliza para aumentar almacenamiento, aunque lo normal se utilice para c
 <br>Lo suyo es crear sobre raid LVM (Gestor de volúmenes lógicos). Es una capa de abastracción entre un dispositivo de almacenamiento y un sistema de ficheros.
 
 Para poder borrar un disco primero es necesario marcarlo como faulty.
-`$ sudo mdadm --manage --set-faulty /dev/md0 /dev/sdb`
-
-Y después ya podemos borrar con `-r` (remove).
+<br>`$ sudo umount /dev/md0`
+<br>`$ sudo mdadm --stop /dev/md0`
+<br>`$ sudo mdadm --remove /dev/md0`
 
 ```
 $ mdadm /dev/md0 -r /dev/sdb
