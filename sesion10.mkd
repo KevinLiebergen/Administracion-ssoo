@@ -21,6 +21,26 @@ Por defecto en los sistemas Linux el usuario tiene un 5% de memoria sin tocar, p
     - `-a` engloba muchos flags (copie la propiedad, permisos, todo)
     - `-v` Verbose mode
 
+
+```bash
+#!/bin/bash
+
+NUM_FILES=$1
+TARGET=$2
+INI_COUNTER=$3
+
+echo Creando $NUM_FILES archivos de tamano aleatorio $TARGET
+CONTADOR=$INI_COUNTER
+
+while [ $CONTADOR -lt $NUM_FILES ]
+do
+	OUT_FILE="$TARGET/FILE-$CONTADOR"
+	echo dd if=/dev/zero of=$OUT_FILE bs=1k count=$RANDOM
+	dd if=/dev/zero of=$OUT_FILE bs=1k count=$RANDOM
+	CONTADOR=$(expr 1 + $CONTADOR)
+done
+```
+
 Vamos a copiar el sistema de ficheros servidor creado antes en una carpeta creada temporal, lo vamos a abortar cuando lleve poco tiempo.
 
 <br>`$ rsync -av servidor/ temporal/`
@@ -289,6 +309,12 @@ Para poder borrar un disco primero es necesario marcarlo como faulty.
 <br>`$ sudo umount /dev/md0`
 <br>`$ sudo mdadm --stop /dev/md0`
 <br>`$ sudo mdadm --remove /dev/md0`
+
+Si no funciona probar con:
+<br>Marcarlo como faulty. $ sudo mdadm --manage --set-faulty /dev/md0 /dev/sdb
+
+Y después ya podemos borrar con -r (remove).
+
 
 ```
 $ mdadm /dev/md0 -r /dev/sdb
