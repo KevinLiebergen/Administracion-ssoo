@@ -205,7 +205,7 @@ $ cat /dev/sdb | hexdump -C -n 512
     - f donde quiero que se me guarden las cosas
 
 <br>tar tiene controlados todos lo bits, si comprimes un disco de 10 gb ocupa algo menos de 10 gb, aunque esten vacios, si escribes un fichero que ocupa 1 mb y lo comprimes seguirán ocupando 10 gb.
-<br>Sin embargo el tar-image.img ocupa 10 gb, si lo comprimes con .gz ocupa comprimido 38 megas, ¿¿por qué?? Porque los bloques vacios de .gz __(zip)__ no los usa.
+<br>Sin embargo el tar-image.img ocupa 10 gb, si lo comprimes con .gz ocupa comprimido 38 megas, ¿¿por qué?? Porque los bloques vacios de .gz  no los usa.
 
 
 - `lsblk` Lists information about all or the specified block.
