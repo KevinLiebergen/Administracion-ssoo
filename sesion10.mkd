@@ -177,6 +177,13 @@ Los dispositivos físicos son difícles de gestionar, gracias a los RAID se perm
 
 #### Mdadm
 
+
+1. Se crea el raid (`mdadm`).
+2. Se crea el sistema de archivos(`mkfs`).
+3. Se monta el bloque sobre una dirección(`mount`).
+
+
+
 Creación raid 0 con 2 dispositivos. `/dev/md0` Es el nombre del dispositivo a crear.
 - `--raid-devices=` Para asignar el número de discos raid.
 - `--level=0` Asignar el número de raid.
@@ -244,9 +251,14 @@ sdd      8:48   0  200G  0 disk
 sde      8:64   0   10G  0 disk
 ```
 
-Creación de raid-5
+- `lsblk -a` Lista todos los bloques
+- `lsblk -f` Ver los sistemas de archivos de los bloques
 
-`$ sudo mdadm --create --level=5 --raid-devices=3 /dev/md0 /dev/sdb /dev/sdc /dev/sde`
+__Creación de raid-5__
+
+<br>`$ mdadm --create /dev/md1 --level=5 --raid-devices=3 /dev/vdb /dev/vdc /dev/vdd –spare-devices=1 /dev/vde `
+<br>ó tambien
+<br>`$ sudo mdadm --create --level=5 --raid-devices=3 /dev/md0 /dev/sdb /dev/sdc /dev/sde`
 
 Uno de los 3 discos sirve para redundancia, así que tenemos agregación y redundancia, con 3 discos de 10 gb tenemos 20 gb.
 
@@ -286,7 +298,8 @@ __Raid Devices__ Se refiere al número de raids que están configurados y __tota
 <br>A parte se encuentra __spare devices__, son discos que están preparados para usarse pero por el momento no se van a utilizarse, están de reserva por si uno falla.
 
 
-Para reconfigurar el array para tener un raid activo se hace uso del parámetro `--grow`
+Si haces el grow y despues quieres montar md0 no te deja, peta.
+<br>Para reconfigurar el array para tener un raid activo se hace uso del parámetro `--grow`
 <br>`$ sudo mdadm --grow --raid-devices=4 /dev/md0`
 
 
@@ -297,26 +310,69 @@ Para reconfigurar el array para tener un raid activo se hace uso del parámetro 
 $ resize2fs /dev/md0
 
 $ df -h
-/dev/md0 30 g
+/dev/md5         30G   44M   28G   1% /home/kevin/nuevoLuisuko
 ```
 Y ahora sí que se ha actualizado.
+
+
+```
+$ lsblk -f
+NAME   FSTYPE           LABEL         UUID                                 MOUNTPOINT
+sda                                                                        
+└─sda1 ext4                           f947e94c-f82b-4941-91c7-d8afb573c7c1 /
+sdb    linux_raid_membe operaciones:5 85f7b1fa-986e-fe1d-90c1-b0f0ff4631a6 
+└─md5  ext4                           ccd8052f-9f91-4a56-ae1c-65e38faa207a 
+sdc    linux_raid_membe operaciones:5 85f7b1fa-986e-fe1d-90c1-b0f0ff4631a6 
+└─md5  ext4                           ccd8052f-9f91-4a56-ae1c-65e38faa207a 
+sdd    linux_raid_membe operaciones:5 85f7b1fa-986e-fe1d-90c1-b0f0ff4631a6 
+└─md5  ext4                           ccd8052f-9f91-4a56-ae1c-65e38faa207a 
+sde    ext4                           e7959ec5-2100-4cb9-91ef-ab686b499c14 
+
+$ sudo mount /dev/md5 nuevoLuisuko/
+
+$ lsblk -f
+NAME   FSTYPE            LABEL         UUID                                 MOUNTPOINT
+sda                                                                         
+└─sda1 ext4                            f947e94c-f82b-4941-91c7-d8afb573c7c1 /
+sdb    linux_raid_member operaciones:5 85f7b1fa-986e-fe1d-90c1-b0f0ff4631a6 
+└─md5  ext4                            ccd8052f-9f91-4a56-ae1c-65e38faa207a /home/kevin/nuevoLuisuko
+sdc    linux_raid_member operaciones:5 85f7b1fa-986e-fe1d-90c1-b0f0ff4631a6 
+└─md5  ext4                            ccd8052f-9f91-4a56-ae1c-65e38faa207a /home/kevin/nuevoLuisuko
+sdd    linux_raid_member operaciones:5 85f7b1fa-986e-fe1d-90c1-b0f0ff4631a6 
+└─md5  ext4                            ccd8052f-9f91-4a56-ae1c-65e38faa207a /home/kevin/nuevoLuisuko
+sde    ext4                            e7959ec5-2100-4cb9-91ef-ab686b499c14 
+
+$ sudo resize2fs /dev/md5
+resize2fs 1.43.4 (31-Jan-2017)
+Filesystem at /dev/md5 is mounted on /home/kevin/nuevoLuisuko; on-line resizing required
+old_desc_blocks = 3, new_desc_blocks = 4
+The filesystem on /dev/md5 is now 7858176 (4k) blocks long.
+
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            286M     0  286M   0% /dev
+tmpfs            60M  3.5M   56M   6% /run
+/dev/sda1       9.8G  8.7G  658M  94% /
+tmpfs           297M     0  297M   0% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+tmpfs           297M     0  297M   0% /sys/fs/cgroup
+/dev/md5         30G   44M   28G   1% /home/kevin/nuevoLuisuko
+```
 
 
 Raid se utiliza para aumentar almacenamiento, aunque lo normal se utilice para crear bloques, sistemas de almacenamiento, eficientes y seguros por redundancia.
 <br>Lo suyo es crear sobre raid LVM (Gestor de volúmenes lógicos). Es una capa de abastracción entre un dispositivo de almacenamiento y un sistema de ficheros.
 
-Para poder borrar un disco primero es necesario marcarlo como faulty.
+#### Borrar un raid
 <br>`$ sudo umount /dev/md0`
-<br>`$ sudo mdadm --stop /dev/md0`
-<br>`$ sudo mdadm --remove /dev/md0`
+<br>`$ sudo mdadm --stop /dev/md0` Paray elimina automáticamente
 
-Si no funciona probar con:
-<br>Marcarlo como faulty. $ sudo mdadm --manage --set-faulty /dev/md0 /dev/sdb
-
-Y después ya podemos borrar con -r (remove).
-
+#### Borrar un disco de un raid
+<br>Marcarlo como faulty. 
 
 ```
+$ sudo mdadm --manage --set-faulty /dev/md0 /dev/sdb
+
 $ mdadm /dev/md0 -r /dev/sdb
 mdadm: hot removed /dev/sdb from /dev/md0
 ```
