@@ -23,7 +23,7 @@ $ ivanhn1/image-caronte:lab1
     * `docker cp container_id:origen destino`
     * `$ docker cp 881bd08c0b08:/etc/nginx/nginx.conf nginx.conf.original`
 
-3. Añadimos en el archivo `nginx.conf` del directorio servers:
+3. Añadimos en el archivo `nginx.conf` del directorio servers, dentro del apartado `http{`:
     - `add_header X-Backend-Server $hostname;`
 
 - Especificamos en el Dockerfile un run de nginx:latest, que copie el archivo modificado a su directorio /etc/nginx y abra el puerto 80.
@@ -35,13 +35,11 @@ COPY nginx.conf /etc/nginx
 EXPOSE 80
 ```
 
-- Creamos directorio html y dentro de él un fichero `index.html` que especifica que página mostrar al principio.
-
 - Crear fichero `nginx.conf` y `Dockerfile` en ~/lb/load-balancer
 
 - load-balancer Dockerfile igual que el de servers
 
-- Poner esto __SOLO__ en fichero `nginx.conf` del __load balancer__ para decirle que balancee las cargas
+- Poner esto __SOLO__ en fichero `nginx.conf` partiendo del `nginx.conf.original` , dentro de `http{` del __load balancer__ para decirle que balancee las cargas
 
 ```
 	upstream app_servers {
@@ -63,6 +61,101 @@ EXPOSE 80
 			proxy_set_header X-Forwarded-Host $server_name;
 		}
 	}
+```
+
+Archivo `nginx.conf` del load-balancer tiene que quedar así.
+```
+user  nginx;
+worker_processes  4;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+
+
+	upstream app_servers {
+		server webserver_1:80;
+		server webserver_2:80;
+	}
+
+	access_log /var/log/nginx/access.log main;
+
+	server {
+		listen 80;
+
+		location / {
+			proxy_pass		http://app_servers;
+			proxy_redirect off;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Host $server_name;
+		}
+	}
+
+
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf;
+}
+
+```
+
+<br> `nginx.conf` de servers tiene que quedar así.
+```
+user  nginx;
+worker_processes  4;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+
+    access_log /var/log/nginx/access.log main;
+
+
+    sendfile        on;
+    #tcp_nopush     on;
+    add_header X-Backend-Server $hostname;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf;
+}
 ```
 
 - Por último crear __docker-compose.yml__ en ~/lb

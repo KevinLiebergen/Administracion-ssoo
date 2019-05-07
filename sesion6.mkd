@@ -101,6 +101,21 @@ CMD ["python","myapp.py"]
 - `COPY` Copia ficheros o directorios desde tu host y lo añade al sistema de ficheros del contenedor en la ruta destino.
 - `CMD ["executable","param1","param2"]` Solo puede haber un instruccion CMD en el Dockerfile, si listas más solo tendrá efecto la última. En este ejemplo es un `$ python myapp.py`.
 
+- Codigo myapp.py
+```python
+print("hola estoy en tu contenedor docker")
+print("ivan sopla")
+```
+
+Construimos el nuevo Dockerfile y lo ejecutamos. Vemos como se imprime lo del script
+
+```
+$ docker build -t imagenNueva:latest
+$ docker run imagenNueva
+
+hola estoy en tu contenedor docker
+ivan sopla
+```
 
 - Creamos volúmenes mapeando con el parámetro `-v` (volumen)
 
@@ -124,8 +139,8 @@ CMD ["python","myapp.py"]
 - `$ docker login`
 
 - `$ docker tag img-kevin:latest kvnk0/img-kevin:lab1` Asignamos una etiqueta
-    - `img-kevin:latest`
-    - `kvnk0/img-kevin:lab1`
+    - `img-kevin:latest` Imagen que tienes en local
+    - `kvnk0/img-kevin:lab1` Como se vera en hub.docker.
 
 
 - `$ docker push kvnk0/img-kevin:lab1` Subimos a la página especificando la imagen.
@@ -144,7 +159,7 @@ CMD ["python","myapp.py"]
 
 - Es necesario mapear un puerto que se abre desde el Docker nginx hasta el host local para poder acceder, esto es realiza cuando se ejecuta un `docker run`.
 - `-p` `localPort:DockerPort`
-- `$ docker run -d -p 8080:80 nginx`
+- `$ docker run -d -p 80:80 nginx`
 
 ![PortMapping](images/portMapping.png)
 
@@ -171,9 +186,19 @@ Welcome to nginx!
     }
 ```
 
-- La plantilla del archivo index.html se encuentra en `/usr/share/nginx/htmlindex.html`
+- La plantilla del archivo index.html se encuentra en `/usr/share/nginx/htmlindex.html` del contenedor.
 
-- `$ docker run -d -v $(pwd):/usr/share/nginx/html -p 80:80 nginx`
+- Crear archivo `index.html` con cualquier contenido en el directorio donde se encuentra Dockerfile.
+
+```html
+<head>
+</head>
+<body>
+Primera modificacion de la pagina web
+</body>
+```
+
+- `$ docker run -d -v $(pwd):/usr/share/nginx/html -p 80:80 nginx` Cuando lo ejecutamos vemos como la página principal ha cambiado a la que hemos puesto nosotros
 
 - `$ docker build . -t miServer` miServer será el nombre de la etiqueta.
 
