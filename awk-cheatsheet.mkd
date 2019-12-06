@@ -1,0 +1,181 @@
+## AWK Cheatsheet
+
+Sacar la 1º Columna
+
+Delimitador por defecto es el espacio o tabulador
+
+```
+$ ls -l / | awk '{print $1}'
+
+total
+lrwxrwxrwx
+drwxr-xr-x
+drwxr-xr-x
+drwxr-xr-x
+```
+
+-F field separator, separar por ':'
+```
+$ head /etc/passwd | awk -F ':' '{print $1}'
+root
+daemon
+bin
+sys
+sync
+games
+man
+lp
+mail
+news
+```
+
+Imprimir primera y quinta linea
+```
+$ ls -l / | awk '{print $1,$5}'
+
+total 
+lrwxrwxrwx 7
+drwxr-xr-x 4096
+drwxr-xr-x 3540
+drwxr-xr-x 12288
+drwxr-xr-x 4096
+lrwxrwxrwx 30
+lrwxrwxrwx 30
+```
+
+Se puede dividir los numeros de la salida (en este caso para hallar el tamaño en mb)
+```
+$ ls -l / | awk '{print $5/1024}'
+0
+0.00683594
+4
+3.45703
+12
+4
+0.0292969
+0.0292969
+```
+
+Añadir leyenda
+```
+$ ls -l / | awk '{print "Tamaño: "$5/1024" Mb"}'
+
+Tamaño: 0 Mb
+Tamaño: 0.00683594 Mb
+Tamaño: 4 Mb
+Tamaño: 3.45703 Mb
+Tamaño: 12 Mb
+Tamaño: 4 Mb
+```
+
+Para sumar
+```
+$ echo 11 22 | awk '{print $1 + $2}'
+33
+```
+
+O para concatenar
+```
+$ echo 11 22 | awk '{print $1  $2}'
+1122
+```
+
+o separado
+```
+$ echo 11 22 | awk '{print $1,  $2}'
+11 22
+```
+
+
+$NF seleccionar ultima palabra
+```
+$ echo "hola mundo, que tal" | awk '{print $NF}'
+tal
+```
+
+$0 cadena completa
+```
+$ echo "hola mundo, que tal" | awk '{print $0}'
+hola mundo, que tal
+```
+Para hacer operaciones
+```
+$ echo "11 22 33" | awk '{ total=0; for (i=1; i<=NF; i++) total += $i; print total }'
+66
+```
+
+Para poner cabecera y pie de página
+```
+$ ls -l / | awk 'BEGIN {print "Tamaños de los archivos"} {print $9, $5}END {"Fin de la lista"}'
+Tamaños de los archivos
+ 
+bin 7
+boot 4096
+dev 3540
+etc 12288
+home 4096
+Fin de la lista
+```
+
+Hacer operaciones con texto
+```
+$ ls -l / | awk 'BEGIN {print "Tamaños de los archivos"} {print $9, $5; total += $5; n++} END {print "Fin de la lista, suma total: " total/n}'
+Tamaños de los archivos
+ 
+bin 7
+boot 4096
+dev 3540
+etc 12288
+home 4096
+initrd.img 30
+initrd.img.old 30
+vmlinuz.old 27
+Fin de la lista, suma total: 78232
+```
+
+
+Hacer operaciones y bucles
+```
+$ echo | awk '{i=0; while(i<8) {print "hola mundo "i*2; i++; } }'
+hola mundo 0
+hola mundo 2
+hola mundo 4
+hola mundo 6
+hola mundo 8
+hola mundo 10
+hola mundo 12
+hola mundo 14
+```
+
+Se puede usar awk en vez de cat
+```
+$ awk  '{print $0}' requirements.txt 
+beautifulsoup4==4.8.0
+certifi==2019.6.16
+chardet==3.0.4
+idna==2.8
+PyMySQL==0.9.3
+pyTelegramBotAPI==3.6.6
+```
+
+
+Para buscar con '/algo/'
+```
+$ awk '/1/' requirements.txt 
+certifi==2019.6.16
+selenium==3.141.0
+six==1.12.0
+soupsieve==1.9.2
+urllib3==1.25.3
+```
+
+Grep case insensitive
+```
+$ grep -i 'py' requirements.txt 
+PyMySQL==0.9.3
+pyTelegramBotAPI==3.6.6
+
+$ awk 'tolower($0) ~ /py/' requirements.txt
+PyMySQL==0.9.3
+pyTelegramBotAPI==3.6.6
+```
