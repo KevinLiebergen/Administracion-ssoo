@@ -1,0 +1,122 @@
+## Sed Cheatsheet
+
+Texto sobre el que se va a trabajar
+```
+$ cat text
+10 tiny toes
+this is that
+5 funny 0 one two three
+three twice
+```
+
+Las instrucciones sobre sustituciones se escriben dentro de las comillas dobles o simples.
+
+Sustituir la __primera t de cada línea__ por T mayúscula
+```
+$ sed 's/t/T/' text 
+10 Tiny toes
+This is that
+5 funny 0 one Two three
+Three twice
+```
+
+Sustituir todas las t (De manera global, `g`), como en vim
+```
+$ sed 's/t/T/g' text 
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three
+Three Twice
+```
+
+Parámetro `-i` para sobreescribir fichero
+```
+$ sed -i 's/t/T/g' text 
+$ cat text 
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three
+Three Twice
+```
+
+Añadimos comentarios, el nuevo fichero es
+```
+$ cat text
+# This is a comment
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three # Another
+Three Twice
+#This is another comment
+```
+
+Borramos todas las c (Sustituir por nada)
+```
+$ sed "s/c//g" text
+# This is a omment
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three # Another
+Three Twie
+#This is another omment
+```
+
+Borramos comentarios, lo que tenga `#` y cualquier caracter que siga depués (`.`) multiplicado por x veces (`*`) se sustituye por nada, es decir se borra
+
+```
+$ sed "s/#.*//g" text 
+
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three 
+Three Twice
+```
+
+La línea `5 funny....` tiene un espacio al final de la línea, (Antes del comentario), para quitarlo, con `\s` que significa Cualquier espacio en blanco
+<br>Con `*` para decir que puede tener o no
+```
+$ sed "s/\s*#.*//g" text 
+
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three
+Three Twice
+```
+
+Podemos concatenar instrucciones con `;`
+```
+$ sed "s/\s*#.*//g; s/c/C/g" text 
+
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three
+Three TwiCe
+```
+
+Parámetro `d` para borrar. Las líneas que tiene el carácter 0 borrar.
+```
+$ sed "s/\s*#.*//g; /0/ d" text 
+
+This is ThaT
+Three Twice
+```
+
+Mostrar las primeras 2 líneas
+```
+$ sed "2q" text 
+# This is a comment
+10 Tiny Toes
+```
+
+Borrar las líneas en blanco
+- Todas las pálabras que empiecen (`^`) y siga de final de línea (`$`) borrarlas (`d`)
+```
+$ sed "/^$/ d" text 
+# This is a comment
+10 Tiny Toes
+This is ThaT
+5 funny 0 one Two Three # Another
+Three Twice
+#This is another comment
+```
+
